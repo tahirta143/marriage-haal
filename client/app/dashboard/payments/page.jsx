@@ -1,0 +1,457 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import api from '../../../lib/api';
+import { Can, PERMISSIONS } from '../../../lib/permissions';
+import {
+  CreditCard,
+  Plus,
+  DollarSign,
+  CheckCircle2,
+  TrendingUp,
+  Sparkles,
+  ShieldAlert,
+  Search,
+  Filter,
+  ArrowRight,
+  Printer,
+  FileText,
+  X,
+  Building2,
+  Calendar,
+} from 'lucide-react';
+
+export default function PaymentsPage() {
+  const [payments, setPayments] = useState([]);
+  const [bookings, setBookings] = useState([]);
+  const [methodFilter, setMethodFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [feedback, setFeedback] = useState('');
+
+  // Record Payment Modal State
+  const [showModal, setShowModal] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] = useState('');
+  const [payAmount, setPayAmount] = useState('');
+  const [payType, setPayType] = useState('token');
+  const [payMethod, setPayMethod] = useState('bank_transfer');
+  const [refNo, setRefNo] = useState('');
+  const [bookingBalanceInfo, setBookingBalanceInfo] = useState(null);
+
+  useEffect(() => {
+    fetchPaymentsData();
+  }, []);
+
+  const fetchPaymentsData = async () => {
+    try {
+      setLoading(true);
+      const [pRes, bRes] = await Promise.all([
+        api.get('/payments'),
+        api.get('/bookings'),
+      ]);
+
+      if (pRes.data.success) setPayments(pRes.data.payments);
+      if (bRes.data.success) {
+        setBookings(bRes.data.bookings);
+        if (bRes.data.bookings.length > 0 && !selectedBookingId) {
+          setSelectedBookingId(bRes.data.bookings[0].id.toString());
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load payments:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // When selected booking changes in modal, load balance details
+  useEffect(() => {
+    if (selectedBookingId) {
+      fetchBookingBalance(selectedBookingId);
+    }
+  }, [selectedBookingId]);
+
+  const fetchBookingBalance = async (bId) => {
+    try {
+      const res = await api.get(`/payments/booking/${bId}`);
+      if (res.data.success) {
+        setBookingBalanceInfo(res.data);
+      }
+    } catch (err) {}
+  };
+
+  const handleRecordPayment = async (e) => {
+    e.preventDefault();
+    if (!selectedBookingId || !payAmount) return;
+
+    try {
+      const res = await api.post('/payments', {
+        booking_id: selectedBookingId,
+        amount: parseFloat(payAmount),
+        type: payType,
+        method: payMethod,
+        reference_no: refNo || `TRX-${Date.now().toString().slice(-6)}`,
+      });
+
+      if (res.data.success) {
+        setFeedback(res.data.message || 'Payment transaction recorded successfully.');
+        setShowModal(false);
+        setPayAmount('');
+        setRefNo('');
+        fetchPaymentsData();
+      }
+    } catch (err) {
+      alert('Failed to record payment transaction');
+    }
+  };
+
+  // Filtered Payments
+  const filteredPayments = payments.filter((p) => {
+    const matchesMethod = methodFilter === 'all' || p.method === methodFilter;
+    const matchesType = typeFilter === 'all' || p.type === typeFilter;
+    const matchesSearch =
+      p.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.booking_id?.toString().includes(searchQuery) ||
+      p.reference_no?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesMethod && matchesType && matchesSearch;
+  });
+
+  // Summary Metrics
+  const totalCollected = payments.reduce((sum, p) => sum + Number(p.amount), 0);
+  const tokenCollected = payments.filter((p) => p.type === 'token').reduce((sum, p) => sum + Number(p.amount), 0);
+  const bankTransferTotal = payments.filter((p) => p.method === 'bank_transfer').reduce((sum, p) => sum + Number(p.amount), 0);
+  const digitalMobileTotal = payments.filter((p) => p.method === 'jazzcash' || p.method === 'easypaisa').reduce((sum, p) => sum + Number(p.amount), 0);
+
+  const getMethodBadge = (m) => {
+    switch (m) {
+      case 'jazzcash':
+        return 'bg-red-500/10 text-red-400 border-red-500/30';
+      case 'easypaisa':
+        return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+      case 'bank_transfer':
+        return 'bg-blue-500/10 text-blue-400 border-blue-500/30';
+      default:
+        return 'bg-amber-500/10 text-amber-400 border-amber-500/30';
+    }
+  };
+
+  return (
+    <Can
+      permission={PERMISSIONS.PAYMENT_VIEW}
+      fallback={
+        <div className="p-8 text-center text-red-400 font-bold flex items-center justify-center gap-2 glass-card rounded-2xl">
+          <ShieldAlert className="w-6 h-6" />
+          Access Denied: Missing 'payment.view' permission.
+        </div>
+      }
+    >
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl glass-panel border border-slate-800">
+          <div>
+            <div className="flex items-center gap-2 text-amber-400 text-xs font-semibold uppercase tracking-wider mb-1">
+              <Sparkles className="w-4 h-4" />
+              Financial Ledger & Receivables
+            </div>
+            <h1 className="text-2xl font-extrabold font-serif-title text-white">
+              Payments Ledger & Receipts
+            </h1>
+            <p className="text-slate-400 text-xs mt-1">
+              Track token advances, installment payments, final settlements, and payment method channels.
+            </p>
+          </div>
+
+          <Can permission={PERMISSIONS.PAYMENT_CREATE}>
+            <button
+              onClick={() => setShowModal(true)}
+              className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-slate-950 font-bold text-xs flex items-center gap-2 transition-colors self-start sm:self-auto shadow-lg glow-accent"
+            >
+              <Plus className="w-4 h-4" />
+              Record Payment
+            </button>
+          </Can>
+        </div>
+
+        {feedback && (
+          <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+            <span>{feedback}</span>
+          </div>
+        )}
+
+        {/* Financial KPI Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="glass-card rounded-2xl p-5 border border-slate-800">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-slate-400 uppercase">Total Collected</span>
+              <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400"><DollarSign className="w-4 h-4" /></div>
+            </div>
+            <div className="text-2xl font-extrabold text-white">PKR {totalCollected.toLocaleString()}</div>
+            <div className="text-xs text-emerald-400 flex items-center gap-1 mt-2">
+              <TrendingUp className="w-3.5 h-3.5" /> All payment receipts
+            </div>
+          </div>
+
+          <div className="glass-card rounded-2xl p-5 border border-slate-800">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-slate-400 uppercase">Token Advances</span>
+              <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400"><CreditCard className="w-4 h-4" /></div>
+            </div>
+            <div className="text-2xl font-extrabold text-amber-400">PKR {tokenCollected.toLocaleString()}</div>
+            <div className="text-xs text-slate-400 mt-2">Initial booking deposits</div>
+          </div>
+
+          <div className="glass-card rounded-2xl p-5 border border-slate-800">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-slate-400 uppercase">Bank Wire Transfers</span>
+              <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400"><Building2 className="w-4 h-4" /></div>
+            </div>
+            <div className="text-2xl font-extrabold text-white">PKR {bankTransferTotal.toLocaleString()}</div>
+            <div className="text-xs text-blue-400 mt-2">Direct bank settlements</div>
+          </div>
+
+          <div className="glass-card rounded-2xl p-5 border border-slate-800">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-slate-400 uppercase">JazzCash / EasyPaisa</span>
+              <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400"><CreditCard className="w-4 h-4" /></div>
+            </div>
+            <div className="text-2xl font-extrabold text-white">PKR {digitalMobileTotal.toLocaleString()}</div>
+            <div className="text-xs text-slate-400 mt-2">Mobile wallet payments</div>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1">
+              <span className="text-[11px] font-semibold text-slate-500 uppercase mr-1">Method:</span>
+              {['all', 'cash', 'bank_transfer', 'jazzcash', 'easypaisa'].map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setMethodFilter(m)}
+                  className={`px-3 py-1 rounded-xl text-xs font-bold uppercase transition-all ${
+                    methodFilter === m
+                      ? 'bg-amber-500 text-slate-950 shadow-md'
+                      : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {m.replace('_', ' ')}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative w-full sm:w-64">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search ref no, customer..."
+              className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
+            />
+          </div>
+        </div>
+
+        {/* Ledger Table */}
+        {loading ? (
+          <div className="text-center py-12 text-slate-400 text-sm">
+            Loading payments ledger...
+          </div>
+        ) : (
+          <div className="glass-card rounded-2xl border border-slate-800 overflow-hidden">
+            <div className="p-4 border-b border-slate-800 font-semibold text-sm flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-amber-400" />
+                Payment Transactions ({filteredPayments.length})
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-900/90 text-slate-400 uppercase font-semibold border-b border-slate-800">
+                  <tr>
+                    <th className="p-3.5">Ref / TRX No.</th>
+                    <th className="p-3.5">Booking ID</th>
+                    <th className="p-3.5">Customer</th>
+                    <th className="p-3.5">Payment Type</th>
+                    <th className="p-3.5">Channel / Method</th>
+                    <th className="p-3.5">Date Paid</th>
+                    <th className="p-3.5 text-right">Amount Received</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                  {filteredPayments.map((p) => (
+                    <tr key={p.id} className="hover:bg-slate-900/50 transition-colors">
+                      <td className="p-3.5 font-mono text-amber-400 font-bold">{p.reference_no}</td>
+                      <td className="p-3.5 font-mono text-slate-200 font-semibold">#{p.booking_id}</td>
+                      <td className="p-3.5 font-medium text-white">{p.customer_name}</td>
+                      <td className="p-3.5">
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-slate-800 text-slate-200 border border-slate-700">
+                          {p.type}
+                        </span>
+                      </td>
+                      <td className="p-3.5">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border ${getMethodBadge(p.method)}`}>
+                          {p.method.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td className="p-3.5 text-slate-400 whitespace-nowrap">
+                        {new Date(p.paid_at).toLocaleDateString()}
+                      </td>
+                      <td className="p-3.5 text-right font-mono font-bold text-emerald-400 text-sm">
+                        PKR {Number(p.amount).toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Modal: Record Payment */}
+        {showModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+            <div className="w-full max-w-lg glass-card rounded-2xl p-6 border border-slate-800 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-amber-400" />
+                  Record New Payment Transaction
+                </h3>
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-white"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleRecordPayment} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                    Select Target Booking
+                  </label>
+                  <select
+                    value={selectedBookingId}
+                    onChange={(e) => setSelectedBookingId(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-amber-500"
+                  >
+                    {bookings.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        #{b.id} — {b.customer_name} ({b.event_type.toUpperCase()})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Balance Preview Card */}
+                {bookingBalanceInfo && (
+                  <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1 text-xs">
+                    <div className="flex justify-between text-slate-400">
+                      <span>Booking Total:</span>
+                      <span className="font-mono text-white font-bold">
+                        PKR {Number(bookingBalanceInfo.bookingTotal).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-slate-400">
+                      <span>Already Paid:</span>
+                      <span className="font-mono text-emerald-400 font-bold">
+                        PKR {Number(bookingBalanceInfo.totalPaid).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-slate-300 pt-1 border-t border-slate-800 font-semibold">
+                      <span>Remaining Balance Due:</span>
+                      <span className="font-mono text-amber-400 font-bold">
+                        PKR {Number(bookingBalanceInfo.remainingBalance).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                      Payment Type
+                    </label>
+                    <select
+                      value={payType}
+                      onChange={(e) => setPayType(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-amber-500"
+                    >
+                      <option value="token">Token Advance</option>
+                      <option value="installment">Installment Payment</option>
+                      <option value="final">Final Settlement</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                      Payment Channel
+                    </label>
+                    <select
+                      value={payMethod}
+                      onChange={(e) => setPayMethod(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-amber-500"
+                    >
+                      <option value="bank_transfer">Bank Transfer (Wire)</option>
+                      <option value="jazzcash">JazzCash Mobile</option>
+                      <option value="easypaisa">EasyPaisa Mobile</option>
+                      <option value="cash">Cash in Hand</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                      Amount Received (PKR)
+                    </label>
+                    <input
+                      type="number"
+                      value={payAmount}
+                      onChange={(e) => setPayAmount(e.target.value)}
+                      placeholder="e.g. 250000"
+                      required
+                      className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                      Reference / TRX ID
+                    </label>
+                    <input
+                      type="text"
+                      value={refNo}
+                      onChange={(e) => setRefNo(e.target.value)}
+                      placeholder="e.g. TRX-884920"
+                      className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs hover:bg-amber-600"
+                  >
+                    Record Payment
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+    </Can>
+  );
+}
