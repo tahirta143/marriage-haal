@@ -147,30 +147,30 @@ exports.login = async (req, res) => {
     }
 
     let user = null;
-    let permissions = [];
+    let isMatch = false;
 
     try {
       const [rows] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
       if (rows.length > 0) {
         user = rows[0];
         permissions = await getUserPermissionsFromDB(user.id);
+        isMatch = await bcrypt.compare(password, user.password_hash);
       }
     } catch (dbErr) {}
 
-    if (!user) {
+    if (!isMatch) {
       const demoMatch = demoUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
       if (demoMatch) {
-        user = demoMatch;
-        permissions = demoMatch.permissions;
+        const demoPasswordMatch = await bcrypt.compare(password, demoMatch.password_hash);
+        if (demoPasswordMatch) {
+          user = demoMatch;
+          permissions = demoMatch.permissions;
+          isMatch = true;
+        }
       }
     }
 
-    if (!user) {
-      return res.status(401).json({ success: false, message: 'Invalid email or password' });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password_hash);
-    if (!isMatch) {
+    if (!user || !isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
 

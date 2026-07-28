@@ -6,11 +6,11 @@ import { useAuth } from '../../lib/auth';
 import { Crown, Building2, Calendar, Briefcase, UserCheck, ShieldCheck, ArrowRight, Sparkles, AlertCircle } from 'lucide-react';
 
 const DEMO_ACCOUNTS = [
-  { role: 'owner', label: 'Hall Owner', email: 'owner@shaadipro.com', pass: 'password123', icon: Crown, color: 'border-amber-500/50 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20' },
-  { role: 'booking_manager', label: 'Booking Manager', email: 'manager@shaadipro.com', pass: 'password123', icon: Building2, color: 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20' },
-  { role: 'staff', label: 'In-House Staff', email: 'staff@shaadipro.com', pass: 'password123', icon: Briefcase, color: 'border-blue-500/50 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20' },
-  { role: 'vendor', label: 'Vendor Partner', email: 'vendor@shaadipro.com', pass: 'password123', icon: UserCheck, color: 'border-purple-500/50 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20' },
-  { role: 'customer', label: 'Customer', email: 'customer@shaadipro.com', pass: 'password123', icon: Calendar, color: 'border-slate-500/50 bg-slate-500/10 text-slate-300 hover:bg-slate-500/20' },
+  { role: 'owner', label: 'Hall Owner', email: 'owner@shaadipro.com', pass: 'password123', icon: Crown, color: 'border-[#AA336A]/30 bg-[#AA336A]/10 text-[#AA336A] hover:bg-[#AA336A]/20' },
+  { role: 'booking_manager', label: 'Booking Manager', email: 'manager@shaadipro.com', pass: 'password123', icon: Building2, color: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20' },
+  { role: 'staff', label: 'In-House Staff', email: 'staff@shaadipro.com', pass: 'password123', icon: Briefcase, color: 'border-blue-500/30 bg-blue-500/10 text-blue-700 hover:bg-blue-500/20' },
+  { role: 'vendor', label: 'Vendor Partner', email: 'vendor@shaadipro.com', pass: 'password123', icon: UserCheck, color: 'border-purple-500/30 bg-purple-500/10 text-purple-700 hover:bg-purple-500/20' },
+  { role: 'customer', label: 'Customer', email: 'customer@shaadipro.com', pass: 'password123', icon: Calendar, color: 'border-amber-500/30 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20' },
 ];
 
 export default function LoginPage() {
@@ -49,31 +49,31 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden bg-slate-950 text-slate-100">
-      {/* Background Gradients */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-amber-600/10 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-10 right-10 w-[400px] h-[400px] bg-emerald-600/10 rounded-full blur-[120px] pointer-events-none" />
+    <div className="min-h-screen flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden bg-white text-[#111827]">
+      {/* Soft Ambient Radial Gradients */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#AA336A]/5 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-10 right-10 w-[400px] h-[400px] bg-rose-400/5 rounded-full blur-[120px] pointer-events-none" />
 
       {/* Main Container */}
       <div className="w-full max-w-md z-10">
         {/* Branding */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-panel text-amber-400 text-xs font-semibold tracking-wider uppercase mb-4 border border-amber-500/20">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-[#E5E7EB] text-[#AA336A] text-xs font-bold tracking-wider uppercase mb-4 shadow-sm">
             <Sparkles className="w-3.5 h-3.5" />
             ShaadiPro Management Suite
           </div>
-          <h1 className="text-4xl font-extrabold font-serif-title tracking-tight text-white mb-2">
-            Shaadi<span className="text-amber-500">Pro</span>
+          <h1 className="text-4xl font-extrabold font-serif-title tracking-tight text-[#111827] mb-2">
+            Shaadi<span className="text-[#AA336A]">Pro</span>
           </h1>
-          <p className="text-slate-400 text-sm">
+          <p className="text-gray-500 text-sm font-medium">
             Unified Permission-Based Portal
           </p>
         </div>
 
         {/* Demo Role Selector */}
-        <div className="mb-6 glass-panel rounded-2xl p-4 border border-slate-800">
-          <div className="text-xs font-medium text-slate-400 mb-3 flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-amber-400" />
+        <div className="mb-6 bg-white rounded-2xl p-4 border border-[#E5E7EB] shadow-sm">
+          <div className="text-xs font-bold text-gray-700 mb-3 flex items-center gap-1.5">
+            <ShieldCheck className="w-4 h-4 text-[#AA336A]" />
             Quick Demo Login (Select Account):
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -85,8 +85,8 @@ export default function LoginPage() {
                   key={acc.role}
                   type="button"
                   onClick={() => handleDemoSelect(acc)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium border transition-all duration-200 text-left ${acc.color} ${
-                    isSelected ? 'ring-2 ring-amber-400 border-amber-400' : ''
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold border transition-all duration-200 text-left ${acc.color} ${
+                    isSelected ? 'ring-2 ring-[#AA336A] border-[#AA336A] bg-[#FDF2F7]' : ''
                   }`}
                 >
                   <IconComponent className="w-3.5 h-3.5 flex-shrink-0" />
@@ -98,14 +98,14 @@ export default function LoginPage() {
         </div>
 
         {/* Login Card */}
-        <div className="glass-card rounded-2xl p-6 sm:p-8 shadow-2xl border border-slate-800">
-          <h2 className="text-xl font-bold text-white mb-6 flex items-center justify-between">
+        <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-xl border border-[#E5E7EB]">
+          <h2 className="text-xl font-bold text-[#111827] mb-6 flex items-center justify-between">
             Sign In
-            <span className="text-xs text-slate-500 font-normal">JWT Auth</span>
+            <span className="text-xs text-gray-400 font-normal">JWT Auth</span>
           </h2>
 
           {error && (
-            <div className="mb-5 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-2">
+            <div className="mb-5 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               <span>{error}</span>
             </div>
@@ -113,7 +113,7 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
                 Email Address
               </label>
               <input
@@ -122,12 +122,12 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@shaadipro.com"
                 required
-                className="w-full px-4 py-3 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-colors"
+                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-[#E5E7EB] text-[#111827] text-sm focus:outline-none focus:bg-white focus:border-[#AA336A] focus:ring-1 focus:ring-[#AA336A] transition-colors"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
                 Password
               </label>
               <input
@@ -136,7 +136,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full px-4 py-3 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-colors"
+                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-[#E5E7EB] text-[#111827] text-sm focus:outline-none focus:bg-white focus:border-[#AA336A] focus:ring-1 focus:ring-[#AA336A] transition-colors"
               />
             </div>
 
@@ -144,10 +144,10 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-slate-950 font-bold text-sm tracking-wide shadow-lg glow-accent flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-50"
+                className="w-full py-3.5 px-4 rounded-xl bg-[#AA336A] hover:bg-[#8E2656] active:bg-[#77234A] text-white font-bold text-sm tracking-wide shadow-lg glow-brand flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-50"
               >
                 {loading ? (
-                  <div className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
                     <span>Enter Unified Workspace</span>
@@ -159,8 +159,8 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <div className="mt-8 text-center text-xs text-slate-500">
-          ShaadiPro System &copy; 2026 • Enterprise Permission Architecture
+        <div className="mt-8 text-center text-xs text-gray-400 font-medium">
+          ShaadiPro System &copy; 2026 • Solid White `#AA336A` Edition
         </div>
       </div>
     </div>

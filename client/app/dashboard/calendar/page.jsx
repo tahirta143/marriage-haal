@@ -58,7 +58,7 @@ export default function CalendarGridPage() {
     <Can
       permission={PERMISSIONS.BOOKING_VIEW}
       fallback={
-        <div className="p-8 text-center text-red-400 font-bold flex items-center justify-center gap-2 glass-card rounded-2xl">
+        <div className="p-8 text-center text-rose-600 font-bold flex items-center justify-center gap-2 bg-white border border-[#F0D5E2] rounded-2xl shadow-sm">
           <ShieldAlert className="w-6 h-6" />
           Access Denied: Missing 'booking.view' permission.
         </div>
@@ -66,16 +66,16 @@ export default function CalendarGridPage() {
     >
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl glass-panel border border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl bg-white border border-[#F0D5E2] shadow-sm">
           <div>
-            <div className="flex items-center gap-2 text-amber-400 text-xs font-semibold uppercase tracking-wider mb-1">
+            <div className="flex items-center gap-2 text-[#AA336A] text-xs font-bold uppercase tracking-wider mb-1">
               <Sparkles className="w-4 h-4" />
               Venue Slot & Reservation Grid
             </div>
-            <h1 className="text-2xl font-extrabold font-serif-title text-white">
+            <h1 className="text-2xl font-extrabold font-serif-title text-[#22131A]">
               Interactive Hall Booking Calendar
             </h1>
-            <p className="text-slate-400 text-xs mt-1">
+            <p className="text-[#705562] text-xs mt-1 font-medium">
               View day and night slot availability across all hall venues.
             </p>
           </div>
@@ -84,7 +84,7 @@ export default function CalendarGridPage() {
             <select
               value={selectedHallId}
               onChange={(e) => setSelectedHallId(e.target.value)}
-              className="px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-amber-500"
+              className="px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-xs text-[#22131A] focus:outline-none focus:border-[#AA336A]"
             >
               <option value="all">All Hall Venues</option>
               {halls.map((h) => (
@@ -96,7 +96,7 @@ export default function CalendarGridPage() {
 
             <Link
               href="/dashboard/bookings"
-              className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-lg glow-accent"
+              className="px-4 py-2.5 rounded-xl bg-[#AA336A] hover:bg-[#8E2656] text-white font-bold text-xs flex items-center gap-2 shadow-lg glow-brand"
             >
               <Plus className="w-4 h-4" />
               New Booking Inquiry
@@ -105,39 +105,39 @@ export default function CalendarGridPage() {
         </div>
 
         {/* Month Control & Legend */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl glass-card border border-slate-800">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl bg-white border border-[#F0D5E2] shadow-sm">
           <div className="flex items-center gap-3">
-            <button className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white">
+            <button className="p-2 rounded-lg bg-[#FAF5F7] border border-[#F0D5E2] text-[#705562] hover:text-[#22131A]">
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-base font-bold text-white font-serif-title">
+            <span className="text-base font-bold text-[#22131A] font-serif-title">
               October 2026
             </span>
-            <button className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white">
+            <button className="p-2 rounded-lg bg-[#FAF5F7] border border-[#F0D5E2] text-[#705562] hover:text-[#22131A]">
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
           {/* Status Legend */}
-          <div className="flex items-center gap-4 text-xs">
+          <div className="flex items-center gap-4 text-xs font-semibold">
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-full bg-emerald-500" />
-              <span className="text-slate-300">Available</span>
+              <span className="text-[#22131A]">Available</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-full bg-amber-500" />
-              <span className="text-slate-300">Tentative</span>
+              <span className="text-[#22131A]">Tentative</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-full bg-purple-500" />
-              <span className="text-slate-300">Booked Event</span>
+              <span className="w-3 h-3 rounded-full bg-[#AA336A]" />
+              <span className="text-[#22131A]">Booked Event</span>
             </div>
           </div>
         </div>
 
         {/* 31-Day Calendar Matrix Grid */}
         {loading ? (
-          <div className="text-center py-12 text-slate-400 text-sm">
+          <div className="text-center py-12 text-[#705562] text-sm font-semibold">
             Loading monthly slot matrix...
           </div>
         ) : (
@@ -145,21 +145,21 @@ export default function CalendarGridPage() {
             {daysInMonth.map(({ dayNum, dateStr, dayEvents }) => (
               <div
                 key={dayNum}
-                className="glass-card rounded-2xl p-3 border border-slate-800 min-h-[120px] flex flex-col justify-between hover:border-slate-700 transition-colors"
+                className="bg-white rounded-2xl p-3 border border-[#F0D5E2] shadow-sm min-h-[120px] flex flex-col justify-between hover:border-[#AA336A]/40 transition-colors"
               >
-                <div className="flex items-center justify-between border-b border-slate-800/60 pb-1.5 mb-2">
-                  <span className="text-xs font-bold font-mono text-slate-400">
+                <div className="flex items-center justify-between border-b border-[#F0D5E2] pb-1.5 mb-2">
+                  <span className="text-xs font-bold font-mono text-[#AA336A]">
                     Oct {dayNum}
                   </span>
-                  <span className="text-[10px] text-slate-500 uppercase font-semibold">2026</span>
+                  <span className="text-[10px] text-[#705562] uppercase font-semibold">2026</span>
                 </div>
 
                 {dayEvents.length === 0 ? (
                   <Link
                     href="/dashboard/bookings"
-                    className="flex-1 flex flex-col items-center justify-center p-2 rounded-xl bg-slate-950/40 hover:bg-emerald-500/10 border border-dashed border-slate-800/80 hover:border-emerald-500/30 group transition-all"
+                    className="flex-1 flex flex-col items-center justify-center p-2 rounded-xl bg-[#FAF5F7] hover:bg-emerald-50 border border-dashed border-[#F0D5E2] hover:border-emerald-300 group transition-all"
                   >
-                    <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider group-hover:underline flex items-center gap-1">
+                    <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider group-hover:underline flex items-center gap-1">
                       + Available
                     </span>
                   </Link>
@@ -171,14 +171,14 @@ export default function CalendarGridPage() {
                         href={`/dashboard/bookings/${evt.booking_id}`}
                         className={`block p-2 rounded-xl border text-[11px] transition-all hover:scale-[1.02] ${
                           evt.status === 'booked'
-                            ? 'bg-purple-500/10 border-purple-500/30 text-purple-300'
-                            : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+                            ? 'bg-[#F7E4EE] border-[#AA336A]/30 text-[#AA336A]'
+                            : 'bg-amber-50 border-amber-200 text-amber-900'
                         }`}
                       >
                         <div className="font-bold uppercase tracking-wide truncate">
                           {evt.event_type} ({evt.slot})
                         </div>
-                        <div className="text-[10px] text-slate-300 truncate">
+                        <div className="text-[10px] text-[#22131A] truncate font-medium">
                           {evt.customer_name}
                         </div>
                       </Link>

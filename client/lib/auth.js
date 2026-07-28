@@ -44,29 +44,37 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    const res = await api.post('/auth/login', { email, password });
-    if (res.data.success) {
-      const { accessToken, user } = res.data;
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('user', JSON.stringify(user));
-      setUser(user);
-      setPermissions(user.permissions || []);
-      return user;
+    try {
+      const res = await api.post('/auth/login', { email, password });
+      if (res.data.success) {
+        const { accessToken, user } = res.data;
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('user', JSON.stringify(user));
+        setUser(user);
+        setPermissions(user.permissions || []);
+        return user;
+      }
+      throw new Error(res.data.message || 'Login failed');
+    } catch (err) {
+      throw new Error(err.response?.data?.message || err.message || 'Login failed');
     }
-    throw new Error(res.data.message || 'Login failed');
   };
 
   const register = async (userData) => {
-    const res = await api.post('/auth/register', userData);
-    if (res.data.success) {
-      const { accessToken, user } = res.data;
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('user', JSON.stringify(user));
-      setUser(user);
-      setPermissions(user.permissions || []);
-      return user;
+    try {
+      const res = await api.post('/auth/register', userData);
+      if (res.data.success) {
+        const { accessToken, user } = res.data;
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('user', JSON.stringify(user));
+        setUser(user);
+        setPermissions(user.permissions || []);
+        return user;
+      }
+      throw new Error(res.data.message || 'Registration failed');
+    } catch (err) {
+      throw new Error(err.response?.data?.message || err.message || 'Registration failed');
     }
-    throw new Error(res.data.message || 'Registration failed');
   };
 
   const logout = async () => {

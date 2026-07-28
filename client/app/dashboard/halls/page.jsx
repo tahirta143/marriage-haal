@@ -113,7 +113,7 @@ export default function HallsPage() {
     <Can
       permission={PERMISSIONS.HALL_MANAGE}
       fallback={
-        <div className="p-8 text-center text-red-400 font-bold flex items-center justify-center gap-2 glass-card rounded-2xl">
+        <div className="p-8 text-center text-rose-600 font-bold flex items-center justify-center gap-2 bg-white border border-[#F0D5E2] rounded-2xl shadow-sm">
           <ShieldAlert className="w-6 h-6" />
           Access Denied: Missing 'hall.manage' permission.
         </div>
@@ -121,23 +121,23 @@ export default function HallsPage() {
     >
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl glass-panel border border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl bg-white border border-[#F0D5E2] shadow-sm">
           <div>
-            <div className="flex items-center gap-2 text-amber-400 text-xs font-semibold uppercase tracking-wider mb-1">
+            <div className="flex items-center gap-2 text-[#AA336A] text-xs font-bold uppercase tracking-wider mb-1">
               <Sparkles className="w-4 h-4" />
               Venue Hall & Slot Roster
             </div>
-            <h1 className="text-2xl font-extrabold font-serif-title text-white">
+            <h1 className="text-2xl font-extrabold font-serif-title text-[#22131A]">
               Marriage Halls & Capacity Management
             </h1>
-            <p className="text-slate-400 text-xs mt-1">
+            <p className="text-[#705562] text-xs mt-1 font-medium">
               Manage venue halls, seating capacities, addresses, and slot operational rules.
             </p>
           </div>
 
           <button
             onClick={() => setShowModal(true)}
-            className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-slate-950 font-bold text-xs flex items-center gap-2 transition-colors self-start sm:self-auto shadow-lg glow-accent"
+            className="px-4 py-2.5 rounded-xl bg-[#AA336A] hover:bg-[#8E2656] active:bg-[#77234A] text-white font-bold text-xs flex items-center gap-2 transition-colors self-start sm:self-auto shadow-lg glow-brand"
           >
             <Plus className="w-4 h-4" />
             Add New Hall Venue
@@ -145,22 +145,22 @@ export default function HallsPage() {
         </div>
 
         {feedback && (
-          <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-600" />
             <span>{feedback}</span>
           </div>
         )}
 
         {errorMessage && (
-          <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-600" />
             <span>{errorMessage}</span>
           </div>
         )}
 
         {/* Halls Grid with Images */}
         {loading ? (
-          <div className="text-center py-12 text-slate-400 text-sm">
+          <div className="text-center py-12 text-[#705562] text-sm font-semibold">
             Loading hall venues...
           </div>
         ) : (
@@ -175,43 +175,43 @@ export default function HallsPage() {
               const fallbackImg = 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=800&q=80';
 
               return (
-                <div key={hall.id} className="glass-card rounded-2xl overflow-hidden border border-slate-800 space-y-4 hover:border-slate-700 transition-colors flex flex-col justify-between">
+                <div key={hall.id} className="bg-white rounded-2xl overflow-hidden border border-[#F0D5E2] shadow-sm hover:border-[#AA336A]/50 transition-colors flex flex-col justify-between">
                   <div>
                     {/* Hall Image */}
-                    <div className="h-48 w-full overflow-hidden relative bg-slate-900">
+                    <div className="h-48 w-full overflow-hidden relative bg-[#FAF5F7]">
                       <img
                         src={hall.image_url || fallbackImg}
                         alt={hall.name}
                         className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                       />
-                      <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-slate-950/80 backdrop-blur-md text-amber-400 border border-amber-500/30">
+                      <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-white/90 backdrop-blur-md text-[#AA336A] border border-[#F0D5E2] shadow-sm">
                         {hall.status}
                       </div>
                     </div>
 
                     <div className="p-6 space-y-3">
                       <div>
-                        <h3 className="text-lg font-bold text-white">{hall.name}</h3>
-                        <div className="text-xs text-slate-400 flex items-center gap-1 mt-1">
-                          <MapPin className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                        <h3 className="text-lg font-bold text-[#22131A]">{hall.name}</h3>
+                        <div className="text-xs text-[#705562] flex items-center gap-1 mt-1 font-medium">
+                          <MapPin className="w-3.5 h-3.5 text-[#AA336A] flex-shrink-0" />
                           {hall.address || 'Lahore, Pakistan'}
                         </div>
                       </div>
 
-                      <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between text-xs">
-                        <span className="text-slate-400 font-medium">Guest Capacity</span>
-                        <span className="font-mono font-bold text-amber-400">
+                      <div className="p-3 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] flex items-center justify-between text-xs">
+                        <span className="text-[#705562] font-semibold">Guest Capacity</span>
+                        <span className="font-mono font-bold text-[#AA336A]">
                           {hall.capacity_min} - {hall.capacity_max} Guests
                         </span>
                       </div>
 
                       <div className="space-y-1.5">
-                        <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                        <div className="text-[11px] font-bold text-[#705562] uppercase tracking-wider">
                           Included Amenities:
                         </div>
                         <div className="flex flex-wrap gap-1.5">
                           {amenities.map((item, idx) => (
-                            <span key={idx} className="px-2 py-0.5 rounded-md bg-slate-950/80 border border-slate-800 text-[10px] text-slate-300 font-medium">
+                            <span key={idx} className="px-2 py-0.5 rounded-md bg-[#FAF5F7] border border-[#F0D5E2] text-[10px] text-[#22131A] font-semibold">
                               ✓ {item}
                             </span>
                           ))}
@@ -227,16 +227,16 @@ export default function HallsPage() {
 
         {/* Modal: Create New Hall */}
         {showModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-            <div className="w-full max-w-md glass-card rounded-2xl p-6 border border-slate-800 space-y-4 max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-amber-400" />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#22131A]/40 backdrop-blur-md">
+            <div className="w-full max-w-md bg-white rounded-2xl p-6 border border-[#F0D5E2] shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between pb-3 border-b border-[#F0D5E2]">
+                <h3 className="text-base font-bold text-[#22131A] flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-[#AA336A]" />
                   Add New Hall Venue
                 </h3>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-white"
+                  className="p-1 rounded-lg text-[#705562] hover:text-[#22131A]"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -244,7 +244,7 @@ export default function HallsPage() {
 
               <form onSubmit={handleCreateHall} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                  <label className="block text-xs font-bold text-[#604453] uppercase mb-1">
                     Hall Venue Name
                   </label>
                   <input
@@ -253,13 +253,13 @@ export default function HallsPage() {
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Royal Crystal Grand Ballroom"
                     required
-                    className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-amber-500"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] focus:outline-none focus:border-[#AA336A] focus:ring-1 focus:ring-[#AA336A]"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                    <label className="block text-xs font-bold text-[#604453] uppercase mb-1">
                       Min Capacity
                     </label>
                     <input
@@ -268,12 +268,12 @@ export default function HallsPage() {
                       onChange={(e) => setCapacityMin(e.target.value)}
                       placeholder="200"
                       required
-                      className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-amber-500"
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] focus:outline-none focus:border-[#AA336A] focus:ring-1 focus:ring-[#AA336A]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                    <label className="block text-xs font-bold text-[#604453] uppercase mb-1">
                       Max Capacity
                     </label>
                     <input
@@ -282,13 +282,13 @@ export default function HallsPage() {
                       onChange={(e) => setCapacityMax(e.target.value)}
                       placeholder="800"
                       required
-                      className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-amber-500"
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] focus:outline-none focus:border-[#AA336A] focus:ring-1 focus:ring-[#AA336A]"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                  <label className="block text-xs font-bold text-[#604453] uppercase mb-1">
                     Address / Location
                   </label>
                   <input
@@ -296,12 +296,12 @@ export default function HallsPage() {
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     placeholder="Gulberg III, Lahore"
-                    className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-amber-500"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] focus:outline-none focus:border-[#AA336A] focus:ring-1 focus:ring-[#AA336A]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                  <label className="block text-xs font-bold text-[#604453] uppercase mb-1">
                     Amenities (Comma-separated)
                   </label>
                   <input
@@ -309,19 +309,19 @@ export default function HallsPage() {
                     value={amenitiesInput}
                     onChange={(e) => setAmenitiesInput(e.target.value)}
                     placeholder="AC, VIP Parking, Chandelier Lighting"
-                    className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-amber-500"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] focus:outline-none focus:border-[#AA336A] focus:ring-1 focus:ring-[#AA336A]"
                   />
                 </div>
 
                 {/* Multer Image Upload Picker */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                  <label className="block text-xs font-bold text-[#604453] uppercase mb-1">
                     Hall Cover Image (Upload or Paste URL)
                   </label>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <label className="flex-1 px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-300 hover:border-amber-500 cursor-pointer flex items-center justify-center gap-2">
-                        <Upload className="w-4 h-4 text-amber-400" />
+                      <label className="flex-1 px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-xs text-[#604453] hover:border-[#AA336A] cursor-pointer flex items-center justify-center gap-2 font-semibold">
+                        <Upload className="w-4 h-4 text-[#AA336A]" />
                         <span>{uploading ? 'Uploading...' : 'Choose Image File (Multer)'}</span>
                         <input type="file" onChange={handleFileUpload} accept="image/*" className="hidden" />
                       </label>
@@ -331,22 +331,22 @@ export default function HallsPage() {
                       value={imageUrl}
                       onChange={(e) => setImageUrl(e.target.value)}
                       placeholder="https://images.unsplash.com/..."
-                      className="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300"
+                      className="w-full px-4 py-2 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-xs text-[#22131A]"
                     />
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#F0D5E2]">
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white"
+                    className="px-4 py-2 rounded-xl text-xs font-semibold text-[#705562] hover:text-[#22131A]"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2.5 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs hover:bg-amber-600"
+                    className="px-5 py-2.5 rounded-xl bg-[#AA336A] text-white font-bold text-xs hover:bg-[#8E2656] shadow-md"
                   >
                     Create Hall Venue
                   </button>

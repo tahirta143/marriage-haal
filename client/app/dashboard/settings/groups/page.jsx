@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../../../lib/api';
 import { Can, PERMISSIONS } from '../../../../lib/permissions';
+import { DndContext, useDraggable, useDroppable } from '@dnd-kit/core';
 import {
   Lock,
   Plus,
@@ -11,12 +12,105 @@ import {
   Save,
   Sparkles,
   Layers,
-  CheckSquare,
-  Square,
-  AlertCircle,
+  X,
+  GripVertical,
+  ArrowRight,
+  ShieldCheck,
+  Trash2,
 } from 'lucide-react';
 
-export default function GroupsManagementPage() {
+// Draggable Permission Card Component (Draggable Anywhere)
+function DraggablePermissionCard({ perm, isAssigned, onToggle }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `perm-${perm.id}`,
+    data: { perm, isAssigned },
+  });
+
+  const style = transform
+    ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        zIndex: 999,
+        opacity: 0.85,
+      }
+    : undefined;
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      style={style}
+      className={`p-3 rounded-xl border flex items-center justify-between transition-all select-none cursor-grab active:cursor-grabbing hover:shadow-md ${
+        isDragging ? 'shadow-2xl ring-2 ring-[#AA336A] bg-white scale-105 opacity-90' : ''
+      } ${
+        isAssigned
+          ? 'bg-[#FDF2F7] border-[#AA336A]/40 text-[#111827]'
+          : 'bg-white border-[#E5E7EB] text-gray-700 hover:border-[#AA336A]/40'
+      }`}
+    >
+      <div className="flex items-center gap-2.5 overflow-hidden">
+        <div className="text-gray-400 p-0.5 flex-shrink-0">
+          <GripVertical className="w-4 h-4 text-[#AA336A]" />
+        </div>
+        <div className="overflow-hidden">
+          <div className="text-xs font-mono font-bold text-[#111827] truncate">{perm.name}</div>
+          <div className="text-[11px] text-gray-500 truncate">{perm.description}</div>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggle(perm.id);
+        }}
+        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-colors flex-shrink-0 ml-2 ${
+          isAssigned
+            ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
+            : 'bg-[#AA336A]/10 text-[#AA336A] hover:bg-[#AA336A]/20 border border-[#AA336A]/25'
+        }`}
+      >
+        {isAssigned ? (
+          <span className="flex items-center gap-1">
+            <Trash2 className="w-3 h-3" /> Remove
+          </span>
+        ) : (
+          <span className="flex items-center gap-1">
+            <Plus className="w-3 h-3" /> Assign
+          </span>
+        )}
+      </button>
+    </div>
+  );
+}
+
+// Droppable Drop Zone Component
+function DroppableTargetZone({ children, id, title, isOverClass }) {
+  const { setNodeRef, isOver } = useDroppable({ id });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`min-h-[360px] p-4 rounded-2xl border-2 transition-all duration-200 ${
+        isOver
+          ? 'border-[#AA336A] bg-[#FDF2F7] ring-4 ring-[#AA336A]/15 scale-[1.01]'
+          : 'border-dashed border-[#E5E7EB] bg-white'
+      }`}
+    >
+      <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center justify-between">
+        <span>{title}</span>
+        {isOver && (
+          <span className="text-[#AA336A] font-bold text-[10px] animate-pulse">
+            Drop here to assign!
+          </span>
+        )}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+export default function AccessControlDndPage() {
   const [groups, setGroups] = useState([]);
   const [permissions, setPermissions] = useState([]);
   const [selectedGroupId, setSelectedGroupId] = useState(null);
@@ -28,7 +122,6 @@ export default function GroupsManagementPage() {
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDesc, setNewGroupDesc] = useState('');
 
-  // Fetch groups & permissions on mount
   useEffect(() => {
     fetchData();
   }, []);
@@ -52,7 +145,7 @@ export default function GroupsManagementPage() {
         }
       }
     } catch (err) {
-      console.error('Failed to fetch RBAC data:', err);
+      console.error('Failed to fetch Access Control data:', err);
     } finally {
       setLoading(false);
     }
@@ -72,6 +165,21 @@ export default function GroupsManagementPage() {
     }
   };
 
+  // Drag & Drop Handler
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    const perm = active.data.current?.perm;
+    if (!perm) return;
+
+    if (over.id === 'assigned-zone' && !selectedPermissions.includes(perm.id)) {
+      setSelectedPermissions((prev) => [...prev, perm.id]);
+    } else if (over.id === 'available-zone' && selectedPermissions.includes(perm.id)) {
+      setSelectedPermissions((prev) => prev.filter((id) => id !== perm.id));
+    }
+  };
+
   const handleSavePermissions = async () => {
     if (!selectedGroupId) return;
     try {
@@ -82,8 +190,7 @@ export default function GroupsManagementPage() {
       });
 
       if (res.data.success) {
-        setFeedback('Group permissions saved successfully! Re-login or refresh to update active JWT permissions.');
-        // Update local group state
+        setFeedback('Access Control permissions updated successfully! Re-login to apply new JWT capabilities.');
         setGroups(
           groups.map((g) =>
             g.id === selectedGroupId ? { ...g, permissions: selectedPermissions } : g
@@ -91,7 +198,7 @@ export default function GroupsManagementPage() {
         );
       }
     } catch (err) {
-      setFeedback('Failed to update group permissions.');
+      setFeedback('Failed to update group access permissions.');
     } finally {
       setSaving(false);
     }
@@ -115,25 +222,19 @@ export default function GroupsManagementPage() {
         fetchData();
       }
     } catch (err) {
-      alert('Failed to create group');
+      alert('Failed to create custom security group');
     }
   };
 
-  // Group permissions by module
-  const permissionsByModule = permissions.reduce((acc, perm) => {
-    const mod = perm.module || 'other';
-    if (!acc[mod]) acc[mod] = [];
-    acc[mod].push(perm);
-    return acc;
-  }, {});
-
   const currentGroup = groups.find((g) => g.id === selectedGroupId);
+  const unassignedPermissions = permissions.filter((p) => !selectedPermissions.includes(p.id));
+  const assignedPermissionsList = permissions.filter((p) => selectedPermissions.includes(p.id));
 
   return (
     <Can
       permission={PERMISSIONS.RBAC_MANAGE}
       fallback={
-        <div className="p-8 text-center text-red-400 font-bold flex items-center justify-center gap-2 glass-card rounded-2xl">
+        <div className="p-8 text-center text-rose-600 font-bold flex items-center justify-center gap-2 bg-white border border-[#E5E7EB] rounded-2xl shadow-sm">
           <ShieldAlert className="w-6 h-6" />
           Access Denied: Missing 'rbac.manage' permission.
         </div>
@@ -141,162 +242,179 @@ export default function GroupsManagementPage() {
     >
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl glass-panel border border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl bg-white border border-[#E5E7EB] shadow-sm">
           <div>
-            <div className="flex items-center gap-2 text-amber-400 text-xs font-semibold uppercase tracking-wider mb-1">
+            <div className="flex items-center gap-2 text-[#AA336A] text-xs font-bold uppercase tracking-wider mb-1">
               <Sparkles className="w-4 h-4" />
-              Dynamic RBAC Engine (Permissions → Groups → Users)
+              Interactive Drag & Drop Access Control Engine (@dnd-kit)
             </div>
-            <h1 className="text-2xl font-extrabold font-serif-title text-white">
-              Group & Permission Settings
+            <h1 className="text-2xl font-extrabold font-serif-title text-[#111827]">
+              Access Control & Permissions Matrix
             </h1>
-            <p className="text-slate-400 text-xs mt-1">
-              Tick or untick granular permission checkboxes for any security group in real time.
+            <p className="text-gray-500 text-xs mt-1 font-medium">
+              Drag permissions from the available pool into the right-side drop zone to assign security access.
             </p>
           </div>
 
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-slate-950 font-bold text-xs flex items-center gap-2 transition-colors self-start sm:self-auto"
+            className="px-4 py-2.5 rounded-xl bg-[#AA336A] hover:bg-[#8E2656] active:bg-[#77234A] text-white font-bold text-xs flex items-center gap-2 transition-colors self-start sm:self-auto shadow-lg glow-brand"
           >
             <Plus className="w-4 h-4" />
-            Create Custom Group
+            Create Security Group
           </button>
         </div>
 
         {feedback && (
-          <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-600" />
             <span>{feedback}</span>
           </div>
         )}
 
         {loading ? (
-          <div className="text-center py-12 text-slate-400 text-sm">
-            Loading permissions matrix...
+          <div className="text-center py-12 text-gray-500 text-sm font-semibold">
+            Loading Access Control matrix...
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left: Security Groups List */}
-            <div className="glass-card rounded-2xl p-5 border border-slate-800 space-y-3">
-              <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2 mb-4">
-                <Layers className="w-4 h-4 text-amber-400" />
-                Security Groups ({groups.length})
-              </h2>
+          <DndContext onDragEnd={handleDragEnd}>
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              {/* Left Column: Security Groups Roster */}
+              <div className="bg-white rounded-2xl p-5 border border-[#E5E7EB] shadow-sm space-y-3 lg:col-span-1">
+                <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2 mb-4">
+                  <Layers className="w-4 h-4 text-[#AA336A]" />
+                  Security Groups ({groups.length})
+                </h2>
 
-              <div className="space-y-2">
-                {groups.map((group) => {
-                  const isSelected = group.id === selectedGroupId;
-                  return (
-                    <button
-                      key={group.id}
-                      onClick={() => handleSelectGroup(group)}
-                      className={`w-full text-left p-3.5 rounded-xl border transition-all duration-150 flex items-center justify-between ${
-                        isSelected
-                          ? 'bg-amber-500/10 border-amber-500/50 text-white font-semibold shadow-md ring-1 ring-amber-500/30'
-                          : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:bg-slate-800/60'
-                      }`}
-                    >
-                      <div>
-                        <div className="text-sm font-medium">{group.name}</div>
-                        <div className="text-[11px] text-slate-400 truncate max-w-[180px]">
-                          {group.description || 'No description'}
+                <div className="space-y-2">
+                  {groups.map((group) => {
+                    const isSelected = group.id === selectedGroupId;
+                    return (
+                      <button
+                        key={group.id}
+                        onClick={() => handleSelectGroup(group)}
+                        className={`w-full text-left p-3.5 rounded-xl border transition-all duration-150 flex items-center justify-between ${
+                          isSelected
+                            ? 'bg-[#FDF2F7] border-[#AA336A] text-[#111827] font-bold ring-1 ring-[#AA336A]/30 shadow-sm'
+                            : 'bg-gray-50 border-[#E5E7EB] text-gray-600 hover:bg-gray-100'
+                        }`}
+                      >
+                        <div>
+                          <div className="text-sm font-bold text-[#111827]">{group.name}</div>
+                          <div className="text-[11px] text-gray-500 truncate max-w-[130px] font-medium">
+                            {group.description || 'No description'}
+                          </div>
                         </div>
-                      </div>
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-slate-800 text-amber-400 border border-slate-700">
-                        {(group.permissions || []).length} perms
-                      </span>
-                    </button>
-                  );
-                })}
+                        <span className="px-2 py-1 rounded-full text-[10px] font-mono font-bold bg-white text-[#AA336A] border border-[#E5E7EB]">
+                          {(group.permissions || []).length} perms
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
 
-            {/* Right: Permission Checkbox Matrix */}
-            <div className="lg:col-span-2 glass-card rounded-2xl p-6 border border-slate-800 space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
-                <div>
-                  <h2 className="text-base font-bold text-white flex items-center gap-2">
-                    <Lock className="w-4 h-4 text-amber-400" />
-                    Permissions Matrix for: <span className="text-amber-400">{currentGroup?.name}</span>
-                  </h2>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    Select permissions granted to all members belonging to this group.
-                  </p>
+              {/* Drag and Drop Workspace (Columns 2, 3, 4) */}
+              <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Available Permissions Pool (Left Source) */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
+                      <Lock className="w-4 h-4 text-gray-400" />
+                      Available Permissions Pool ({unassignedPermissions.length})
+                    </h3>
+                  </div>
+
+                  <DroppableTargetZone id="available-zone" title="Drag source area">
+                    {unassignedPermissions.length === 0 ? (
+                      <div className="h-full flex items-center justify-center text-xs text-gray-400 text-center p-8">
+                        All system permissions are currently assigned to this group!
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
+                        {unassignedPermissions.map((perm) => (
+                          <DraggablePermissionCard
+                            key={perm.id}
+                            perm={perm}
+                            isAssigned={false}
+                            onToggle={togglePermission}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </DroppableTargetZone>
                 </div>
 
+                {/* Assigned Permissions Drop Zone (Right Target) */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-[#111827] uppercase tracking-wider flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-[#AA336A]" />
+                      Assigned Group Permissions ({assignedPermissionsList.length})
+                    </h3>
+
+                    <button
+                      onClick={handleSavePermissions}
+                      disabled={saving}
+                      className="px-4 py-2 rounded-xl bg-[#AA336A] hover:bg-[#8E2656] active:bg-[#77234A] text-white font-bold text-xs flex items-center gap-2 transition-colors shadow-md disabled:opacity-50"
+                    >
+                      {saving ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4" />
+                          Save Access Control
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  <DroppableTargetZone id="assigned-zone" title={`Active Group: ${currentGroup?.name || 'Selected Group'}`}>
+                    {assignedPermissionsList.length === 0 ? (
+                      <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-xs text-gray-400 text-center p-8 border-2 border-dashed border-[#AA336A]/20 rounded-xl bg-[#FDF2F7]/50">
+                        <ArrowRight className="w-8 h-8 text-[#AA336A] mb-2 animate-bounce" />
+                        <span className="font-bold text-gray-700">Drop Zone Ready</span>
+                        <span className="mt-1 text-gray-500">Drag permissions from the left pool and drop here to assign.</span>
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
+                        {assignedPermissionsList.map((perm) => (
+                          <DraggablePermissionCard
+                            key={perm.id}
+                            perm={perm}
+                            isAssigned={true}
+                            onToggle={togglePermission}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </DroppableTargetZone>
+                </div>
+              </div>
+            </div>
+          </DndContext>
+        )}
+
+        {/* Modal: Create Security Group */}
+        {showCreateModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111827]/40 backdrop-blur-md">
+            <div className="w-full max-w-md bg-white rounded-2xl p-6 border border-[#E5E7EB] shadow-xl space-y-4 text-[#111827]">
+              <div className="flex items-center justify-between pb-2 border-b border-[#E5E7EB]">
+                <h3 className="text-lg font-bold text-[#111827] flex items-center gap-2">
+                  <Plus className="w-5 h-5 text-[#AA336A]" />
+                  Create New Security Group
+                </h3>
                 <button
-                  onClick={handleSavePermissions}
-                  disabled={saving}
-                  className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                  onClick={() => setShowCreateModal(false)}
+                  className="p-1 rounded-lg text-gray-400 hover:text-[#111827]"
                 >
-                  {saving ? (
-                    <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4" />
-                      Save Permissions
-                    </>
-                  )}
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Module Checkbox Grid */}
-              <div className="space-y-6">
-                {Object.entries(permissionsByModule).map(([moduleName, modulePerms]) => (
-                  <div key={moduleName} className="space-y-3">
-                    <div className="text-xs font-bold uppercase tracking-wider text-amber-400/90 border-b border-slate-800/80 pb-1 flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-amber-400" />
-                      {moduleName} Module ({modulePerms.length} actions)
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      {modulePerms.map((perm) => {
-                        const isChecked = selectedPermissions.includes(perm.id);
-                        return (
-                          <div
-                            key={perm.id}
-                            onClick={() => togglePermission(perm.id)}
-                            className={`p-3 rounded-xl border cursor-pointer transition-all duration-150 flex items-start gap-3 ${
-                              isChecked
-                                ? 'bg-slate-900 border-amber-500/40 text-slate-100'
-                                : 'bg-slate-950/40 border-slate-800/80 text-slate-400 hover:bg-slate-900/60'
-                            }`}
-                          >
-                            <div className="mt-0.5">
-                              {isChecked ? (
-                                <CheckSquare className="w-4 h-4 text-amber-400" />
-                              ) : (
-                                <Square className="w-4 h-4 text-slate-600" />
-                              )}
-                            </div>
-                            <div>
-                              <div className="text-xs font-mono font-bold text-slate-200">{perm.name}</div>
-                              <div className="text-[11px] text-slate-400">{perm.description}</div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Modal: Create Group */}
-        {showCreateModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-            <div className="w-full max-w-md glass-card rounded-2xl p-6 border border-slate-800 space-y-4">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Plus className="w-5 h-5 text-amber-400" />
-                Create New Security Group
-              </h3>
-
               <form onSubmit={handleCreateGroup} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
                     Group Name
                   </label>
                   <input
@@ -305,12 +423,12 @@ export default function GroupsManagementPage() {
                     onChange={(e) => setNewGroupName(e.target.value)}
                     placeholder="e.g. Photography Coordinator"
                     required
-                    className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-amber-500"
+                    className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-[#E5E7EB] text-sm text-[#111827] focus:outline-none focus:border-[#AA336A]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
                     Description
                   </label>
                   <textarea
@@ -318,21 +436,21 @@ export default function GroupsManagementPage() {
                     onChange={(e) => setNewGroupDesc(e.target.value)}
                     placeholder="Brief description of duties and permissions"
                     rows={3}
-                    className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-amber-500"
+                    className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-[#E5E7EB] text-sm text-[#111827] focus:outline-none focus:border-[#AA336A]"
                   />
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-2">
+                <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#E5E7EB]">
                   <button
                     type="button"
                     onClick={() => setShowCreateModal(false)}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white"
+                    className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-500 hover:text-[#111827]"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2.5 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs hover:bg-amber-600"
+                    className="px-5 py-2.5 rounded-xl bg-[#AA336A] text-white font-bold text-xs hover:bg-[#8E2656] shadow-md"
                   >
                     Create Group
                   </button>

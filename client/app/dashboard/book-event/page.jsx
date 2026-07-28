@@ -83,8 +83,7 @@ export default function BookEventPage() {
       }
     } catch (err) {
       console.error('Failed to load event builder data:', err);
-    } font-normal
-    finally {
+    } finally {
       setLoading(false);
     }
   };
@@ -120,33 +119,41 @@ export default function BookEventPage() {
       return { ...pkg, lineTotal };
     });
 
-    const tax = Math.round(subtotal * 0.05); // 5% service tax
+    const tax = Math.round(subtotal * 0.05); // 5% Service tax
     const grandTotal = subtotal + tax;
 
-    return { subtotal, tax, grandTotal, items };
+    return { subtotal, tax, grandTotal, selectedItemsList: items };
   };
 
-  const { subtotal, tax, grandTotal, items: selectedItemsList } = calculateTotals();
+  const { subtotal, tax, grandTotal, selectedItemsList } = calculateTotals();
 
   const handleSubmitReservation = async (e) => {
     e.preventDefault();
-    if (!selectedHall || !custName) return;
+    if (!selectedHall) {
+      setErrorMessage('Please select a hall venue.');
+      return;
+    }
+    if (!custPhone) {
+      setErrorMessage('Please enter a contact phone number.');
+      return;
+    }
 
     try {
       setSubmitting(true);
-      setFeedback('');
       setErrorMessage('');
+      setFeedback('');
 
       const payload = {
-        customer_name: custName,
-        customer_email: custEmail,
-        customer_phone: custPhone || '+92 300 0000000',
         hall_id: selectedHall.id,
         event_type: eventType,
         event_date: eventDate,
-        slot: eventSlot,
+        event_slot: eventSlot,
         guest_count: guestCount,
-        selected_services: selectedItemsList,
+        customer_name: custName,
+        customer_email: custEmail,
+        customer_phone: custPhone,
+        total_amount: grandTotal,
+        selected_packages: selectedItemsList,
       };
 
       const res = await api.post('/bookings', payload);
@@ -165,33 +172,33 @@ export default function BookEventPage() {
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
       {/* Top Luxury Banner */}
-      <div className="relative overflow-hidden rounded-3xl glass-panel p-8 sm:p-10 border border-amber-500/30">
-        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="relative overflow-hidden rounded-3xl bg-white p-8 sm:p-10 border border-[#F0D5E2] shadow-sm">
+        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-96 h-96 bg-[#AA336A]/10 rounded-full blur-3xl pointer-events-none" />
         
         <div className="relative z-10 max-w-2xl space-y-3">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#AA336A]/10 border border-[#AA336A]/30 text-[#AA336A] text-xs font-bold uppercase tracking-wider">
             <Sparkles className="w-4 h-4" />
             Client Self-Service Event Customizer
           </div>
-          <h1 className="text-4xl sm:text-5xl font-extrabold font-serif-title tracking-tight text-white">
-            Plan Your <span className="text-amber-400">Dream Wedding</span>
+          <h1 className="text-4xl sm:text-5xl font-extrabold font-serif-title tracking-tight text-[#22131A]">
+            Plan Your <span className="text-[#AA336A]">Dream Wedding</span>
           </h1>
-          <p className="text-slate-300 text-sm leading-relaxed">
+          <p className="text-[#705562] text-sm leading-relaxed font-medium">
             Customize your hall venue, guest count, catering menus, stage decor themes, photography, and bridal styling with real-time running price calculations.
           </p>
         </div>
 
         {/* Stepper Header */}
-        <div className="grid grid-cols-3 gap-2 mt-8 pt-6 border-t border-slate-800 text-center">
+        <div className="grid grid-cols-3 gap-2 mt-8 pt-6 border-t border-[#F0D5E2] text-center">
           <button
             onClick={() => setCurrentStep(1)}
             className={`p-3 rounded-2xl border transition-all text-xs font-bold flex items-center justify-center gap-2 ${
               currentStep === 1
-                ? 'bg-amber-500 text-slate-950 border-amber-500 shadow-lg shadow-amber-500/20'
-                : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-white'
+                ? 'bg-[#AA336A] text-white border-[#AA336A] shadow-md shadow-[#AA336A]/25'
+                : 'bg-[#FAF5F7] border-[#F0D5E2] text-[#705562] hover:text-[#AA336A]'
             }`}
           >
-            <span className="w-5 h-5 rounded-full bg-slate-950/30 flex items-center justify-center font-mono">1</span>
+            <span className="w-5 h-5 rounded-full bg-white/30 flex items-center justify-center font-mono text-[10px]">1</span>
             <span className="hidden sm:inline">Venue & Guests</span>
           </button>
 
@@ -199,11 +206,11 @@ export default function BookEventPage() {
             onClick={() => setCurrentStep(2)}
             className={`p-3 rounded-2xl border transition-all text-xs font-bold flex items-center justify-center gap-2 ${
               currentStep === 2
-                ? 'bg-amber-500 text-slate-950 border-amber-500 shadow-lg shadow-amber-500/20'
-                : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-white'
+                ? 'bg-[#AA336A] text-white border-[#AA336A] shadow-md shadow-[#AA336A]/25'
+                : 'bg-[#FAF5F7] border-[#F0D5E2] text-[#705562] hover:text-[#AA336A]'
             }`}
           >
-            <span className="w-5 h-5 rounded-full bg-slate-950/30 flex items-center justify-center font-mono">2</span>
+            <span className="w-5 h-5 rounded-full bg-white/30 flex items-center justify-center font-mono text-[10px]">2</span>
             <span className="hidden sm:inline">Services & Menu</span>
           </button>
 
@@ -211,32 +218,32 @@ export default function BookEventPage() {
             onClick={() => setCurrentStep(3)}
             className={`p-3 rounded-2xl border transition-all text-xs font-bold flex items-center justify-center gap-2 ${
               currentStep === 3
-                ? 'bg-amber-500 text-slate-950 border-amber-500 shadow-lg shadow-amber-500/20'
-                : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-white'
+                ? 'bg-[#AA336A] text-white border-[#AA336A] shadow-md shadow-[#AA336A]/25'
+                : 'bg-[#FAF5F7] border-[#F0D5E2] text-[#705562] hover:text-[#AA336A]'
             }`}
           >
-            <span className="w-5 h-5 rounded-full bg-slate-950/30 flex items-center justify-center font-mono">3</span>
+            <span className="w-5 h-5 rounded-full bg-white/30 flex items-center justify-center font-mono text-[10px]">3</span>
             <span className="hidden sm:inline">Instant Invoice</span>
           </button>
         </div>
       </div>
 
       {feedback && (
-        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center gap-2">
-          <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2">
+          <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-600" />
           <span>{feedback}</span>
         </div>
       )}
 
       {errorMessage && (
-        <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-bold flex items-center gap-2">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center gap-2">
+          <AlertCircle className="w-5 h-5 flex-shrink-0 text-rose-600" />
           <span>{errorMessage}</span>
         </div>
       )}
 
       {loading ? (
-        <div className="text-center py-16 text-slate-400 text-sm">
+        <div className="text-center py-16 text-[#705562] text-sm font-semibold">
           Loading venue halls and service catalog...
         </div>
       ) : (
@@ -246,8 +253,8 @@ export default function BookEventPage() {
             {/* STEP 1: Venue & Guests */}
             {currentStep === 1 && (
               <div className="space-y-6">
-                <h2 className="text-xl font-bold font-serif-title text-white flex items-center gap-2">
-                  <Building2 className="w-5 h-5 text-amber-400" />
+                <h2 className="text-xl font-bold font-serif-title text-[#22131A] flex items-center gap-2">
+                  <Building2 className="w-5 h-5 text-[#AA336A]" />
                   Select Hall Venue & Event Schedule
                 </h2>
 
@@ -267,22 +274,22 @@ export default function BookEventPage() {
                       <div
                         key={hall.id}
                         onClick={() => setSelectedHall(hall)}
-                        className={`rounded-3xl glass-card border cursor-pointer transition-all duration-200 overflow-hidden ${
+                        className={`rounded-3xl bg-white border cursor-pointer transition-all duration-200 overflow-hidden ${
                           isSelected
-                            ? 'border-amber-400 bg-amber-500/10 ring-2 ring-amber-400/40 shadow-xl'
-                            : 'border-slate-800 hover:border-slate-700'
+                            ? 'border-[#AA336A] bg-[#F7E4EE]/40 ring-2 ring-[#AA336A]/40 shadow-md'
+                            : 'border-[#F0D5E2] hover:border-[#AA336A]/40'
                         }`}
                       >
                         <div className="flex flex-col sm:flex-row">
                           {/* Hall Cover Image */}
-                          <div className="sm:w-56 h-48 sm:h-auto overflow-hidden bg-slate-900 flex-shrink-0 relative">
+                          <div className="sm:w-56 h-48 sm:h-auto overflow-hidden bg-[#FAF5F7] flex-shrink-0 relative">
                             <img
                               src={hall.image_url || fallbackImg}
                               alt={hall.name}
                               className="w-full h-full object-cover"
                             />
                             {isSelected && (
-                              <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-amber-500 text-slate-950 flex items-center gap-1 shadow-lg">
+                              <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-[#AA336A] text-white flex items-center gap-1 shadow-md">
                                 <CheckCircle2 className="w-3.5 h-3.5" /> Selected Venue
                               </div>
                             )}
@@ -290,10 +297,10 @@ export default function BookEventPage() {
 
                           <div className="p-6 flex-1 space-y-3 flex flex-col justify-between">
                             <div>
-                              <h3 className="text-lg font-bold text-white">{hall.name}</h3>
-                              <p className="text-xs text-slate-400 mt-1">{hall.address}</p>
+                              <h3 className="text-lg font-bold text-[#22131A]">{hall.name}</h3>
+                              <p className="text-xs text-[#705562] mt-1 font-medium">{hall.address}</p>
 
-                              <div className="mt-2 text-xs font-bold text-amber-400">
+                              <div className="mt-2 text-xs font-bold text-[#AA336A]">
                                 Capacity: {hall.capacity_min} - {hall.capacity_max} Guests
                               </div>
                             </div>
@@ -303,7 +310,7 @@ export default function BookEventPage() {
                               {amenitiesList.map((item, idx) => (
                                 <span
                                   key={idx}
-                                  className="px-2.5 py-1 rounded-lg bg-slate-950/60 border border-slate-800 text-[11px] text-slate-300 font-medium"
+                                  className="px-2.5 py-1 rounded-lg bg-[#FAF5F7] border border-[#F0D5E2] text-[11px] text-[#22131A] font-semibold"
                                 >
                                   ✓ {item}
                                 </span>
@@ -317,20 +324,20 @@ export default function BookEventPage() {
                 </div>
 
                 {/* Schedule & Guest Specs Form */}
-                <div className="glass-card rounded-3xl p-6 border border-slate-800 space-y-5">
-                  <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider">
+                <div className="bg-white rounded-3xl p-6 border border-[#F0D5E2] space-y-5 shadow-sm">
+                  <h3 className="text-sm font-bold text-[#604453] uppercase tracking-wider">
                     Event Specs & Guest Count
                   </h3>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                      <label className="block text-xs font-bold text-[#604453] uppercase mb-1.5">
                         Event Function
                       </label>
                       <select
                         value={eventType}
                         onChange={(e) => setEventType(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-sm text-slate-100 font-bold uppercase focus:outline-none focus:border-amber-500"
+                        className="w-full px-4 py-3 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] font-bold uppercase focus:outline-none focus:border-[#AA336A]"
                       >
                         <option value="baraat">Baraat Ceremony</option>
                         <option value="walima">Walima Reception</option>
@@ -340,25 +347,25 @@ export default function BookEventPage() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                      <label className="block text-xs font-bold text-[#604453] uppercase mb-1.5">
                         Event Date
                       </label>
                       <input
                         type="date"
                         value={eventDate}
                         onChange={(e) => setEventDate(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-amber-500"
+                        className="w-full px-4 py-3 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] focus:outline-none focus:border-[#AA336A]"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                      <label className="block text-xs font-bold text-[#604453] uppercase mb-1.5">
                         Timing Slot
                       </label>
                       <select
                         value={eventSlot}
                         onChange={(e) => setEventSlot(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-amber-500 uppercase"
+                        className="w-full px-4 py-3 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] focus:outline-none focus:border-[#AA336A] uppercase font-semibold"
                       >
                         <option value="night">Night (07:00 PM - 11:30 PM)</option>
                         <option value="day">Day (01:00 PM - 04:30 PM)</option>
@@ -367,12 +374,12 @@ export default function BookEventPage() {
                   </div>
 
                   {/* Interactive Guest Counter Slider */}
-                  <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-3">
+                  <div className="p-5 rounded-2xl bg-[#FAF5F7] border border-[#F0D5E2] space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-slate-300 uppercase">
+                      <span className="text-xs font-bold text-[#604453] uppercase">
                         Guest Count (Multiplies Catering Pricing)
                       </span>
-                      <span className="text-lg font-extrabold text-amber-400 font-mono">
+                      <span className="text-lg font-extrabold text-[#AA336A] font-mono">
                         {guestCount} Guests
                       </span>
                     </div>
@@ -381,7 +388,7 @@ export default function BookEventPage() {
                       <button
                         type="button"
                         onClick={() => setGuestCount(Math.max(50, guestCount - 25))}
-                        className="p-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 hover:text-white"
+                        className="p-2 rounded-xl bg-white border border-[#F0D5E2] text-[#604453] hover:text-[#AA336A]"
                       >
                         <Minus className="w-4 h-4" />
                       </button>
@@ -392,12 +399,12 @@ export default function BookEventPage() {
                         step="25"
                         value={guestCount}
                         onChange={(e) => setGuestCount(parseInt(e.target.value))}
-                        className="flex-1 accent-amber-500 cursor-pointer"
+                        className="flex-1 accent-[#AA336A] cursor-pointer"
                       />
                       <button
                         type="button"
                         onClick={() => setGuestCount(guestCount + 25)}
-                        className="p-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 hover:text-white"
+                        className="p-2 rounded-xl bg-white border border-[#F0D5E2] text-[#604453] hover:text-[#AA336A]"
                       >
                         <Plus className="w-4 h-4" />
                       </button>
@@ -408,7 +415,7 @@ export default function BookEventPage() {
                 <div className="flex justify-end">
                   <button
                     onClick={() => setCurrentStep(2)}
-                    className="px-8 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-slate-950 font-extrabold text-xs uppercase tracking-wider shadow-lg glow-accent flex items-center gap-2"
+                    className="px-8 py-3.5 rounded-2xl bg-[#AA336A] hover:bg-[#8E2656] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg glow-brand flex items-center gap-2"
                   >
                     <span>Customize Service Packages</span>
                     <ArrowRight className="w-4 h-4" />
@@ -420,8 +427,8 @@ export default function BookEventPage() {
             {/* STEP 2: Service Packages Selector */}
             {currentStep === 2 && (
               <div className="space-y-6">
-                <h2 className="text-xl font-bold font-serif-title text-white flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-amber-400" />
+                <h2 className="text-xl font-bold font-serif-title text-[#22131A] flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-[#AA336A]" />
                   Select Service Packages & Inclusions
                 </h2>
 
@@ -429,23 +436,23 @@ export default function BookEventPage() {
                   {categories.map((cat) => {
                     const Icon = CATEGORY_ICONS[cat.name] || Sparkles;
                     return (
-                      <div key={cat.id} className="glass-card rounded-3xl p-6 border border-slate-800 space-y-4">
-                        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                      <div key={cat.id} className="bg-white rounded-3xl p-6 border border-[#F0D5E2] space-y-4 shadow-sm">
+                        <div className="flex items-center justify-between border-b border-[#F0D5E2] pb-3">
                           <div className="flex items-center gap-3">
                             {cat.image_url ? (
                               <img
                                 src={cat.image_url}
                                 alt={cat.name}
-                                className="w-10 h-10 rounded-xl object-cover border border-amber-500/30"
+                                className="w-10 h-10 rounded-xl object-cover border border-[#F0D5E2]"
                               />
                             ) : (
-                              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
+                              <div className="p-2.5 rounded-xl bg-[#AA336A]/10 border border-[#AA336A]/30 text-[#AA336A]">
                                 <Icon className="w-5 h-5" />
                               </div>
                             )}
                             <div>
-                              <h3 className="text-base font-bold text-white">{cat.name}</h3>
-                              <p className="text-xs text-slate-400">
+                              <h3 className="text-base font-bold text-[#22131A]">{cat.name}</h3>
+                              <p className="text-xs text-[#705562] font-medium">
                                 Pricing: {cat.pricing_type === 'per_head' ? 'Per Guest' : cat.pricing_type}
                               </p>
                             </div>
@@ -466,19 +473,19 @@ export default function BookEventPage() {
                                 onClick={() => togglePackageSelection(cat, pkg)}
                                 className={`rounded-2xl border cursor-pointer transition-all duration-200 overflow-hidden flex flex-col justify-between ${
                                   isSelected
-                                    ? 'bg-amber-500/10 border-amber-400 text-white ring-1 ring-amber-400/30 shadow-lg'
-                                    : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:bg-slate-800/60'
+                                    ? 'bg-[#F7E4EE] border-[#AA336A] text-[#22131A] ring-1 ring-[#AA336A]/30 shadow-md'
+                                    : 'bg-[#FAF5F7] border-[#F0D5E2] text-[#604453] hover:bg-[#F3E8EE]'
                                 }`}
                               >
                                 {pkg.image_url && (
-                                  <div className="h-32 w-full overflow-hidden bg-slate-950 relative">
+                                  <div className="h-32 w-full overflow-hidden bg-[#FAF5F7] relative">
                                     <img
                                       src={pkg.image_url}
                                       alt={pkg.name}
                                       className="w-full h-full object-cover"
                                     />
                                     {isSelected && (
-                                      <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-500 text-slate-950 flex items-center gap-1 shadow-md">
+                                      <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-[#AA336A] text-white flex items-center gap-1 shadow-md">
                                         <CheckCircle2 className="w-3 h-3" /> Selected
                                       </div>
                                     )}
@@ -487,34 +494,34 @@ export default function BookEventPage() {
 
                                 <div className="p-5 space-y-2">
                                   <div className="flex items-center justify-between">
-                                    <div className="text-sm font-bold text-white flex items-center gap-2">
+                                    <div className="text-sm font-bold text-[#22131A] flex items-center gap-2">
                                       {isSelected ? (
-                                        <CheckCircle2 className="w-4 h-4 text-amber-400" />
+                                        <CheckCircle2 className="w-4 h-4 text-[#AA336A]" />
                                       ) : (
-                                        <span className="w-4 h-4 rounded-full border border-slate-600" />
+                                        <span className="w-4 h-4 rounded-full border border-[#D5B0C2]" />
                                       )}
                                       {pkg.name}
                                     </div>
                                   </div>
 
-                                  <div className="text-lg font-extrabold text-amber-400">
+                                  <div className="text-lg font-extrabold text-[#AA336A]">
                                     PKR {Number(pkg.price).toLocaleString()}
-                                    <span className="text-xs text-slate-400 font-normal ml-1">
+                                    <span className="text-xs text-[#705562] font-normal ml-1">
                                       {cat.pricing_type === 'per_head' ? '/ guest' : 'flat'}
                                     </span>
                                   </div>
 
                                   {cat.pricing_type === 'per_head' && (
-                                    <div className="text-xs font-bold text-emerald-400">
+                                    <div className="text-xs font-bold text-emerald-700">
                                       = PKR {computedPrice.toLocaleString()} ({guestCount} guests)
                                     </div>
                                   )}
 
                                   {/* Details */}
-                                  <ul className="mt-3 space-y-1 border-t border-slate-800/80 pt-2 text-[11px] text-slate-400">
+                                  <ul className="mt-3 space-y-1 border-t border-[#F0D5E2] pt-2 text-[11px] text-[#705562]">
                                     {(pkg.details || []).slice(0, 4).map((item, i) => (
                                       <li key={i} className="flex items-center gap-1.5">
-                                        <span className="w-1 h-1 rounded-full bg-amber-400" />
+                                        <span className="w-1 h-1 rounded-full bg-[#AA336A]" />
                                         <span>{item}</span>
                                       </li>
                                     ))}
@@ -532,13 +539,13 @@ export default function BookEventPage() {
                 <div className="flex items-center justify-between pt-4">
                   <button
                     onClick={() => setCurrentStep(1)}
-                    className="px-6 py-3 rounded-2xl bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300"
+                    className="px-6 py-3 rounded-2xl bg-white border border-[#F0D5E2] text-xs font-bold text-[#604453]"
                   >
                     Back to Venue Specs
                   </button>
                   <button
                     onClick={() => setCurrentStep(3)}
-                    className="px-8 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs uppercase tracking-wider shadow-lg glow-accent flex items-center gap-2"
+                    className="px-8 py-3.5 rounded-2xl bg-[#AA336A] hover:bg-[#8E2656] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg glow-brand flex items-center gap-2"
                   >
                     <span>View Instant Invoice</span>
                     <ArrowRight className="w-4 h-4" />
@@ -550,19 +557,19 @@ export default function BookEventPage() {
             {/* STEP 3: Instant Invoice & Contact Details */}
             {currentStep === 3 && (
               <div className="space-y-6">
-                <h2 className="text-xl font-bold font-serif-title text-white flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                <h2 className="text-xl font-bold font-serif-title text-[#22131A] flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                   Review Final Reservation & Submit Inquiry
                 </h2>
 
-                <form onSubmit={handleSubmitReservation} className="glass-card rounded-3xl p-6 border border-slate-800 space-y-4">
-                  <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider">
+                <form onSubmit={handleSubmitReservation} className="bg-white rounded-3xl p-6 border border-[#F0D5E2] space-y-4 shadow-sm">
+                  <h3 className="text-sm font-bold text-[#604453] uppercase tracking-wider">
                     Contact Details for Reservation Receipt
                   </h3>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                      <label className="block text-xs font-bold text-[#604453] uppercase mb-1">
                         Full Name
                       </label>
                       <input
@@ -571,12 +578,12 @@ export default function BookEventPage() {
                         onChange={(e) => setCustName(e.target.value)}
                         placeholder="Usman Tariq"
                         required
-                        className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-amber-500"
+                        className="w-full px-4 py-3 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] focus:outline-none focus:border-[#AA336A]"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                      <label className="block text-xs font-bold text-[#604453] uppercase mb-1">
                         Email Address
                       </label>
                       <input
@@ -584,12 +591,12 @@ export default function BookEventPage() {
                         value={custEmail}
                         onChange={(e) => setCustEmail(e.target.value)}
                         placeholder="usman@gmail.com"
-                        className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-amber-500"
+                        className="w-full px-4 py-3 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] focus:outline-none focus:border-[#AA336A]"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                      <label className="block text-xs font-bold text-[#604453] uppercase mb-1">
                         Phone Number
                       </label>
                       <input
@@ -598,7 +605,7 @@ export default function BookEventPage() {
                         onChange={(e) => setCustPhone(e.target.value)}
                         placeholder="+92 300 1234567"
                         required
-                        className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-amber-500"
+                        className="w-full px-4 py-3 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] focus:outline-none focus:border-[#AA336A]"
                       />
                     </div>
                   </div>
@@ -607,17 +614,17 @@ export default function BookEventPage() {
                     <button
                       type="button"
                       onClick={() => setCurrentStep(2)}
-                      className="px-6 py-3 rounded-2xl bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300"
+                      className="px-6 py-3 rounded-2xl bg-white border border-[#F0D5E2] text-xs font-bold text-[#604453]"
                     >
                       Back to Services
                     </button>
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="px-8 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-slate-950 font-extrabold text-xs uppercase tracking-wider shadow-lg glow-accent flex items-center gap-2 disabled:opacity-50"
+                      className="px-8 py-3.5 rounded-2xl bg-[#AA336A] hover:bg-[#8E2656] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg glow-brand flex items-center gap-2 disabled:opacity-50"
                     >
                       {submitting ? (
-                        <div className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                       ) : (
                         <>
                           <CheckCircle2 className="w-5 h-5" />
@@ -633,60 +640,60 @@ export default function BookEventPage() {
 
           {/* Sticky Sidebar: Live Running Invoice Calculator (Right 1 col) */}
           <div className="space-y-6">
-            <div className="sticky top-6 glass-panel rounded-3xl p-6 border border-amber-500/30 space-y-5 shadow-2xl">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div className="sticky top-6 bg-white rounded-3xl p-6 border border-[#F0D5E2] space-y-5 shadow-lg">
+              <div className="flex items-center justify-between pb-3 border-b border-[#F0D5E2]">
                 <div>
-                  <div className="text-xs font-bold text-amber-400 uppercase tracking-wider">
+                  <div className="text-xs font-bold text-[#AA336A] uppercase tracking-wider">
                     Live Running Calculator
                   </div>
-                  <h3 className="text-base font-bold text-white">Invoice Summary</h3>
+                  <h3 className="text-base font-bold text-[#22131A]">Invoice Summary</h3>
                 </div>
-                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400">
+                <div className="p-2 rounded-xl bg-[#AA336A]/10 text-[#AA336A]">
                   <DollarSign className="w-5 h-5" />
                 </div>
               </div>
 
               {/* Event Specs Summary */}
-              <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-1 text-xs">
-                <div className="text-slate-400 flex items-center justify-between">
+              <div className="p-3.5 rounded-2xl bg-[#FAF5F7] border border-[#F0D5E2] space-y-1 text-xs">
+                <div className="text-[#705562] flex items-center justify-between font-medium">
                   <span>Venue:</span>
-                  <span className="font-bold text-white truncate max-w-[140px]">
+                  <span className="font-bold text-[#22131A] truncate max-w-[140px]">
                     {selectedHall?.name || 'Not Selected'}
                   </span>
                 </div>
-                <div className="text-slate-400 flex items-center justify-between">
+                <div className="text-[#705562] flex items-center justify-between font-medium">
                   <span>Function:</span>
-                  <span className="font-bold text-amber-400 uppercase">{eventType}</span>
+                  <span className="font-bold text-[#AA336A] uppercase">{eventType}</span>
                 </div>
-                <div className="text-slate-400 flex items-center justify-between">
+                <div className="text-[#705562] flex items-center justify-between font-medium">
                   <span>Schedule:</span>
-                  <span className="font-bold text-white">{eventDate} ({eventSlot})</span>
+                  <span className="font-bold text-[#22131A]">{eventDate} ({eventSlot})</span>
                 </div>
-                <div className="text-slate-400 flex items-center justify-between">
+                <div className="text-[#705562] flex items-center justify-between font-medium">
                   <span>Guest Count:</span>
-                  <span className="font-bold text-emerald-400">{guestCount} Guests</span>
+                  <span className="font-bold text-emerald-700">{guestCount} Guests</span>
                 </div>
               </div>
 
               {/* Selected Packages List */}
               <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-[#604453]">
                   Selected Packages ({selectedItemsList.length}):
                 </div>
 
-                <div className="space-y-2 max-h-48 overflow-y-auto pr-1 divide-y divide-slate-800/60 text-xs">
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-1 divide-y divide-[#F0D5E2] text-xs">
                   {selectedItemsList.length === 0 ? (
-                    <div className="text-slate-500 text-center py-3">No packages selected yet.</div>
+                    <div className="text-[#9E7D8C] text-center py-3">No packages selected yet.</div>
                   ) : (
                     selectedItemsList.map((item) => (
                       <div key={item.id} className="pt-2 flex items-center justify-between">
                         <div>
-                          <div className="font-bold text-white">{item.name}</div>
-                          <div className="text-[10px] text-slate-400">
+                          <div className="font-bold text-[#22131A]">{item.name}</div>
+                          <div className="text-[10px] text-[#705562]">
                             {item.category_name} {item.pricing_type === 'per_head' ? `(${guestCount} guests)` : ''}
                           </div>
                         </div>
-                        <div className="font-mono font-bold text-amber-400">
+                        <div className="font-mono font-bold text-[#AA336A]">
                           PKR {item.lineTotal.toLocaleString()}
                         </div>
                       </div>
@@ -696,25 +703,25 @@ export default function BookEventPage() {
               </div>
 
               {/* Price Math Breakdown */}
-              <div className="pt-4 border-t border-slate-800 space-y-2 text-xs">
-                <div className="flex justify-between text-slate-400">
+              <div className="pt-4 border-t border-[#F0D5E2] space-y-2 text-xs">
+                <div className="flex justify-between text-[#705562] font-medium">
                   <span>Services Subtotal:</span>
-                  <span className="font-mono text-white">PKR {subtotal.toLocaleString()}</span>
+                  <span className="font-mono text-[#22131A]">PKR {subtotal.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-slate-400">
+                <div className="flex justify-between text-[#705562] font-medium">
                   <span>Est. Service Tax (5%):</span>
-                  <span className="font-mono text-slate-400">PKR {tax.toLocaleString()}</span>
+                  <span className="font-mono text-[#705562]">PKR {tax.toLocaleString()}</span>
                 </div>
 
-                <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
-                  <span className="text-sm font-extrabold text-white">Grand Total</span>
-                  <span className="text-xl font-extrabold text-amber-400 font-mono">
+                <div className="pt-3 border-t border-[#F0D5E2] flex items-center justify-between">
+                  <span className="text-sm font-extrabold text-[#22131A]">Grand Total</span>
+                  <span className="text-xl font-extrabold text-[#AA336A] font-mono">
                     PKR {grandTotal.toLocaleString()}
                   </span>
                 </div>
               </div>
 
-              <div className="text-[10px] text-slate-500 text-center pt-2">
+              <div className="text-[10px] text-[#9E7D8C] text-center pt-2 font-medium">
                 * Prices calculated dynamically with real-time per-head multiplier.
               </div>
             </div>

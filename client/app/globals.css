@@ -2,39 +2,86 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-serif: 'Playfair Display', Georgia, serif;
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 334 25% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 334 25% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 334 25% 10%;
+
+    --primary: 334 54% 44%; /* #AA336A */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 334 30% 96%;
+    --secondary-foreground: 334 54% 28%;
+
+    --muted: 334 15% 96%;
+    --muted-foreground: 334 15% 42%;
+
+    --accent: 334 40% 94%;
+    --accent-foreground: 334 54% 44%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 334 54% 44%;
+
+    --radius: 0.75rem;
+
+    --brand-primary: #AA336A;
+  }
 }
 
 body {
-  font-family: var(--font-sans);
-  background-color: #0f172a;
-  color: #f8fafc;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  background-color: #FFFFFF;
+  color: #111827;
   min-height: 100vh;
 }
 
 .font-serif-title {
-  font-family: var(--font-serif);
+  font-family: 'Playfair Display', Georgia, serif;
 }
 
+/* Solid White Panels & Cards */
 .glass-panel {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  box-shadow: 0 4px 20px -2px rgba(170, 51, 106, 0.05);
 }
 
 .glass-card {
-  background: rgba(30, 41, 59, 0.7);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.04);
 }
 
 .glow-accent {
-  box-shadow: 0 0 25px -5px rgba(217, 119, 6, 0.35);
+  box-shadow: 0 0 25px -5px rgba(170, 51, 106, 0.25);
 }
 
-.glow-emerald {
-  box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.35);
+.glow-brand {
+  box-shadow: 0 0 25px -5px rgba(170, 51, 106, 0.35);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #FFFFFF;
+}
+::-webkit-scrollbar-thumb {
+  background: #E5E7EB;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #AA336A;
 }

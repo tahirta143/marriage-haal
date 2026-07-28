@@ -18,6 +18,7 @@ import {
   ShieldAlert,
   CheckCircle2,
   Upload,
+  X,
 } from 'lucide-react';
 
 const CATEGORY_ICONS = {
@@ -131,7 +132,7 @@ export default function CategoriesPage() {
     <Can
       permission={PERMISSIONS.CATEGORY_MANAGE}
       fallback={
-        <div className="p-8 text-center text-red-400 font-bold flex items-center justify-center gap-2 glass-card rounded-2xl">
+        <div className="p-8 text-center text-rose-600 font-bold flex items-center justify-center gap-2 bg-white border border-[#F0D5E2] rounded-2xl shadow-sm">
           <ShieldAlert className="w-6 h-6" />
           Access Denied: Missing 'category.manage' permission.
         </div>
@@ -139,31 +140,31 @@ export default function CategoriesPage() {
     >
       <div className="space-y-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl glass-panel border border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl bg-white border border-[#F0D5E2] shadow-sm">
           <div>
-            <div className="flex items-center gap-2 text-amber-400 text-xs font-semibold uppercase tracking-wider mb-1">
+            <div className="flex items-center gap-2 text-[#AA336A] text-xs font-bold uppercase tracking-wider mb-1">
               <Sparkles className="w-4 h-4" />
               Service Catalog & Pricing Structure
             </div>
-            <h1 className="text-2xl font-extrabold font-serif-title text-white">
+            <h1 className="text-2xl font-extrabold font-serif-title text-[#22131A]">
               Categories & Package Management
             </h1>
-            <p className="text-slate-400 text-xs mt-1">
+            <p className="text-[#705562] text-xs mt-1 font-medium">
               Manage Food & Catering, Stage Decor, Photography, Makeup, and DJ sound system pricing.
             </p>
           </div>
         </div>
 
         {feedback && (
-          <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-600" />
             <span>{feedback}</span>
           </div>
         )}
 
         {/* Categories List */}
         {loading ? (
-          <div className="text-center py-12 text-slate-400 text-sm">
+          <div className="text-center py-12 text-[#705562] text-sm font-semibold">
             Loading catalog packages...
           </div>
         ) : (
@@ -173,24 +174,24 @@ export default function CategoriesPage() {
               return (
                 <div
                   key={category.id}
-                  className="glass-card rounded-3xl p-6 border border-slate-800 space-y-6"
+                  className="bg-white rounded-3xl p-6 border border-[#F0D5E2] space-y-6 shadow-sm"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#F0D5E2] pb-4">
                     <div className="flex items-center gap-3">
                       {category.image_url ? (
                         <img
                           src={category.image_url}
                           alt={category.name}
-                          className="w-12 h-12 rounded-2xl object-cover border border-amber-500/30"
+                          className="w-12 h-12 rounded-2xl object-cover border border-[#F0D5E2]"
                         />
                       ) : (
-                        <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
+                        <div className="p-3 rounded-2xl bg-[#AA336A]/10 border border-[#AA336A]/30 text-[#AA336A]">
                           <IconComponent className="w-6 h-6" />
                         </div>
                       )}
                       <div>
-                        <h2 className="text-xl font-bold text-white">{category.name}</h2>
-                        <span className="text-xs text-amber-400 font-semibold uppercase tracking-wider">
+                        <h2 className="text-xl font-bold text-[#22131A]">{category.name}</h2>
+                        <span className="text-xs text-[#AA336A] font-bold uppercase tracking-wider">
                           Pricing Model: {category.pricing_type}
                         </span>
                       </div>
@@ -201,7 +202,7 @@ export default function CategoriesPage() {
                         setSelectedCatId(category.id);
                         setShowPkgModal(true);
                       }}
-                      className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs flex items-center gap-1.5 self-start sm:self-auto shadow-md"
+                      className="px-3.5 py-2 rounded-xl bg-[#AA336A] hover:bg-[#8E2656] text-white font-bold text-xs flex items-center gap-1.5 self-start sm:self-auto shadow-md"
                     >
                       <Plus className="w-4 h-4" />
                       Add Package
@@ -213,11 +214,11 @@ export default function CategoriesPage() {
                     {(category.packages || []).map((pkg) => (
                       <div
                         key={pkg.id}
-                        className="rounded-2xl bg-slate-900/80 border border-slate-800 overflow-hidden flex flex-col justify-between hover:border-slate-700 transition-colors"
+                        className="rounded-2xl bg-[#FAF5F7] border border-[#F0D5E2] overflow-hidden flex flex-col justify-between hover:border-[#AA336A]/40 transition-colors"
                       >
                         {/* Package Thumbnail */}
                         {pkg.image_url && (
-                          <div className="h-36 w-full overflow-hidden bg-slate-950 relative">
+                          <div className="h-36 w-full overflow-hidden bg-white relative">
                             <img
                               src={pkg.image_url}
                               alt={pkg.name}
@@ -228,32 +229,32 @@ export default function CategoriesPage() {
 
                         <div className="p-5 space-y-3">
                           <div className="flex items-start justify-between gap-2">
-                            <h3 className="text-base font-bold text-white">{pkg.name}</h3>
+                            <h3 className="text-base font-bold text-[#22131A]">{pkg.name}</h3>
                             <button
                               onClick={() => handleDeletePackage(pkg.id)}
-                              className="p-1 rounded-lg text-slate-500 hover:text-red-400 transition-colors"
+                              className="p-1 rounded-lg text-[#9E7D8C] hover:text-rose-600 transition-colors"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
 
-                          <div className="text-lg font-extrabold font-mono text-amber-400">
+                          <div className="text-lg font-extrabold font-mono text-[#AA336A]">
                             PKR {Number(pkg.price).toLocaleString()}
-                            <span className="text-xs text-slate-400 font-normal ml-1">
+                            <span className="text-xs text-[#705562] font-normal ml-1">
                               {category.pricing_type === 'per_head' ? '/ guest' : 'flat'}
                             </span>
                           </div>
 
                           {/* Inclusion Chips */}
-                          <div className="space-y-1 pt-2 border-t border-slate-800/80">
-                            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                          <div className="space-y-1 pt-2 border-t border-[#F0D5E2]">
+                            <div className="text-[10px] font-bold uppercase tracking-wider text-[#705562]">
                               Included Items:
                             </div>
                             <div className="flex flex-wrap gap-1">
                               {(pkg.details || []).map((detail, idx) => (
                                 <span
                                   key={idx}
-                                  className="px-2 py-0.5 rounded-md bg-slate-950 text-[10px] text-slate-300 border border-slate-800"
+                                  className="px-2 py-0.5 rounded-md bg-white text-[10px] text-[#22131A] font-medium border border-[#F0D5E2]"
                                 >
                                   ✓ {detail}
                                 </span>
@@ -272,16 +273,16 @@ export default function CategoriesPage() {
 
         {/* Modal: Add Package */}
         {showPkgModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-            <div className="w-full max-w-md glass-card rounded-2xl p-6 border border-slate-800 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <Package className="w-4 h-4 text-amber-400" />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#22131A]/40 backdrop-blur-md">
+            <div className="w-full max-w-md bg-white rounded-2xl p-6 border border-[#F0D5E2] shadow-xl space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[#F0D5E2]">
+                <h3 className="text-base font-bold text-[#22131A] flex items-center gap-2">
+                  <Package className="w-4 h-4 text-[#AA336A]" />
                   Add New Service Package
                 </h3>
                 <button
                   onClick={() => setShowPkgModal(false)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-white"
+                  className="p-1 rounded-lg text-[#705562] hover:text-[#22131A]"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -289,7 +290,7 @@ export default function CategoriesPage() {
 
               <form onSubmit={handleCreatePackage} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                  <label className="block text-xs font-bold text-[#604453] uppercase mb-1">
                     Package Name
                   </label>
                   <input
@@ -298,12 +299,12 @@ export default function CategoriesPage() {
                     onChange={(e) => setPkgName(e.target.value)}
                     placeholder="e.g. Royal Diamond Buffet"
                     required
-                    className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-amber-500"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] focus:outline-none focus:border-[#AA336A]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                  <label className="block text-xs font-bold text-[#604453] uppercase mb-1">
                     Package Price (PKR)
                   </label>
                   <input
@@ -312,12 +313,12 @@ export default function CategoriesPage() {
                     onChange={(e) => setPkgPrice(e.target.value)}
                     placeholder="2500"
                     required
-                    className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-amber-500"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] focus:outline-none focus:border-[#AA336A]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                  <label className="block text-xs font-bold text-[#604453] uppercase mb-1">
                     Inclusions (Comma-separated)
                   </label>
                   <input
@@ -325,18 +326,18 @@ export default function CategoriesPage() {
                     value={pkgDetails}
                     onChange={(e) => setPkgDetails(e.target.value)}
                     placeholder="Mutton Qorma, Biryani, Naan, Dessert Bar"
-                    className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-amber-500"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] focus:outline-none focus:border-[#AA336A]"
                   />
                 </div>
 
                 {/* Multer Image Upload Picker */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                  <label className="block text-xs font-bold text-[#604453] uppercase mb-1">
                     Package Image Cover (Upload or URL)
                   </label>
                   <div className="space-y-2">
-                    <label className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-300 hover:border-amber-500 cursor-pointer flex items-center justify-center gap-2">
-                      <Upload className="w-4 h-4 text-amber-400" />
+                    <label className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-xs text-[#604453] hover:border-[#AA336A] cursor-pointer flex items-center justify-center gap-2 font-semibold">
+                      <Upload className="w-4 h-4 text-[#AA336A]" />
                       <span>{uploading ? 'Uploading...' : 'Upload Image File (Multer)'}</span>
                       <input type="file" onChange={handleFileUpload} accept="image/*" className="hidden" />
                     </label>
@@ -345,22 +346,22 @@ export default function CategoriesPage() {
                       value={pkgImageUrl}
                       onChange={(e) => setPkgImageUrl(e.target.value)}
                       placeholder="https://images.unsplash.com/..."
-                      className="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300"
+                      className="w-full px-4 py-2 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-xs text-[#22131A]"
                     />
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#F0D5E2]">
                   <button
                     type="button"
                     onClick={() => setShowPkgModal(false)}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white"
+                    className="px-4 py-2 rounded-xl text-xs font-semibold text-[#705562] hover:text-[#22131A]"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2.5 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs hover:bg-amber-600"
+                    className="px-5 py-2.5 rounded-xl bg-[#AA336A] text-white font-bold text-xs hover:bg-[#8E2656] shadow-md"
                   >
                     Add Package
                   </button>

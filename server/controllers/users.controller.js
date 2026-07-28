@@ -54,6 +54,48 @@ exports.createUser = async (req, res) => {
   }
 };
 
+// PUT /api/users/:id - Edit user profile details and/or change password (RBAC Protected)
+exports.updateUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, phone, status, password, group_id } = req.body;
+
+    const [userRows] = await pool.execute('SELECT * FROM users WHERE id = ?', [id]);
+    if (userRows.length === 0) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    let updateFields = [];
+    let queryParams = [];
+
+    if (name) { updateFields.push('name = ?'); queryParams.push(name); }
+    if (email) { updateFields.push('email = ?'); queryParams.push(email); }
+    if (phone !== undefined) { updateFields.push('phone = ?'); queryParams.push(phone); }
+    if (status) { updateFields.push('status = ?'); queryParams.push(status); }
+
+    if (password && password.trim() !== '') {
+      const salt = await bcrypt.genSalt(10);
+      const password_hash = await bcrypt.hash(password, salt);
+      updateFields.push('password_hash = ?');
+      queryParams.push(password_hash);
+    }
+
+    if (updateFields.length > 0) {
+      queryParams.push(id);
+      await pool.execute(`UPDATE users SET ${updateFields.join(', ')} WHERE id = ?`, queryParams);
+    }
+
+    if (group_id) {
+      await pool.execute('DELETE FROM user_groups WHERE user_id = ?', [id]);
+      await pool.execute('INSERT INTO user_groups (user_id, group_id) VALUES (?, ?)', [id, group_id]);
+    }
+
+    return res.status(200).json({ success: true, message: 'User account details & password updated successfully' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to update user details', error: error.message });
+  }
+};
+
 // PUT /api/users/:id/group - Update user group assignment
 exports.updateUserGroup = async (req, res) => {
   try {
