@@ -35,8 +35,9 @@ export default function CategoriesPage() {
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState('');
 
-  // Modal State for New Package
+  // Modal State for Package Add / Edit
   const [showPkgModal, setShowPkgModal] = useState(false);
+  const [editingPkgId, setEditingPkgId] = useState(null);
   const [selectedCatId, setSelectedCatId] = useState(null);
   const [pkgName, setPkgName] = useState('');
   const [pkgPrice, setPkgPrice] = useState('');
@@ -84,7 +85,28 @@ export default function CategoriesPage() {
     }
   };
 
-  const handleCreatePackage = async (e) => {
+  const openCreateModal = (catId) => {
+    setEditingPkgId(null);
+    setSelectedCatId(catId);
+    setPkgName('');
+    setPkgPrice('');
+    setPkgDetails('');
+    setPkgImageUrl('');
+    setShowPkgModal(true);
+  };
+
+  const openEditModal = (catId, pkg) => {
+    setEditingPkgId(pkg.id);
+    setSelectedCatId(catId);
+    setPkgName(pkg.name);
+    setPkgPrice(pkg.price);
+    const detailsStr = Array.isArray(pkg.details) ? pkg.details.join(', ') : (pkg.details || '');
+    setPkgDetails(detailsStr);
+    setPkgImageUrl(pkg.image_url || '');
+    setShowPkgModal(true);
+  };
+
+  const handleSavePackage = async (e) => {
     e.preventDefault();
     if (!selectedCatId || !pkgName || !pkgPrice) return;
 
@@ -94,24 +116,36 @@ export default function CategoriesPage() {
         .map((s) => s.trim())
         .filter(Boolean);
 
-      const res = await api.post(`/categories/${selectedCatId}/packages`, {
-        name: pkgName,
-        price: parseFloat(pkgPrice),
-        details: detailsArray,
-        image_url: pkgImageUrl,
-      });
+      if (editingPkgId) {
+        // Update package in MySQL
+        const res = await api.put(`/categories/packages/${editingPkgId}`, {
+          name: pkgName,
+          price: parseFloat(pkgPrice),
+          details: detailsArray,
+          image_url: pkgImageUrl,
+        });
 
-      if (res.data.success) {
-        setFeedback(`Package '${pkgName}' added successfully.`);
-        setShowPkgModal(false);
-        setPkgName('');
-        setPkgPrice('');
-        setPkgDetails('');
-        setPkgImageUrl('');
-        fetchCategories();
+        if (res.data.success) {
+          setFeedback(`Package '${pkgName}' updated successfully.`);
+        }
+      } else {
+        // Create package in MySQL
+        const res = await api.post(`/categories/${selectedCatId}/packages`, {
+          name: pkgName,
+          price: parseFloat(pkgPrice),
+          details: detailsArray,
+          image_url: pkgImageUrl,
+        });
+
+        if (res.data.success) {
+          setFeedback(`Package '${pkgName}' created successfully.`);
+        }
       }
+
+      setShowPkgModal(false);
+      fetchCategories();
     } catch (err) {
-      alert('Failed to add package');
+      alert('Failed to save package');
     }
   };
 
@@ -120,7 +154,7 @@ export default function CategoriesPage() {
     try {
       const res = await api.delete(`/categories/packages/${packageId}`);
       if (res.data.success) {
-        setFeedback('Package deleted.');
+        setFeedback('Package deleted from database.');
         fetchCategories();
       }
     } catch (err) {
@@ -147,10 +181,10 @@ export default function CategoriesPage() {
               Service Catalog & Pricing Structure
             </div>
             <h1 className="text-2xl font-extrabold font-serif-title text-[#22131A]">
-              Categories & Package Management
+              Services & Package Management (Add, Edit, Update, Delete)
             </h1>
             <p className="text-[#705562] text-xs mt-1 font-medium">
-              Manage Food & Catering, Stage Decor, Photography, Makeup, and DJ sound system pricing.
+              Direct MySQL database integration to manage Food & Catering, Stage Decor, Photography, Makeup, and DJ packages.
             </p>
           </div>
         </div>
@@ -165,7 +199,7 @@ export default function CategoriesPage() {
         {/* Categories List */}
         {loading ? (
           <div className="text-center py-12 text-[#705562] text-sm font-semibold">
-            Loading catalog packages...
+            Loading database service packages...
           </div>
         ) : (
           <div className="space-y-8">
@@ -198,10 +232,7 @@ export default function CategoriesPage() {
                     </div>
 
                     <button
-                      onClick={() => {
-                        setSelectedCatId(category.id);
-                        setShowPkgModal(true);
-                      }}
+                      onClick={() => openCreateModal(category.id)}
                       className="px-3.5 py-2 rounded-xl bg-[#AA336A] hover:bg-[#8E2656] text-white font-bold text-xs flex items-center gap-1.5 self-start sm:self-auto shadow-md"
                     >
                       <Plus className="w-4 h-4" />
@@ -230,12 +261,22 @@ export default function CategoriesPage() {
                         <div className="p-5 space-y-3">
                           <div className="flex items-start justify-between gap-2">
                             <h3 className="text-base font-bold text-[#22131A]">{pkg.name}</h3>
-                            <button
-                              onClick={() => handleDeletePackage(pkg.id)}
-                              className="p-1 rounded-lg text-[#9E7D8C] hover:text-rose-600 transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => openEditModal(category.id, pkg)}
+                                className="p-1 rounded-lg text-[#705562] hover:text-[#AA336A] transition-colors"
+                                title="Edit Package"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeletePackage(pkg.id)}
+                                className="p-1 rounded-lg text-[#9E7D8C] hover:text-rose-600 transition-colors"
+                                title="Delete Package"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
 
                           <div className="text-lg font-extrabold font-mono text-[#AA336A]">
@@ -271,14 +312,14 @@ export default function CategoriesPage() {
           </div>
         )}
 
-        {/* Modal: Add Package */}
+        {/* Modal: Add or Edit Package */}
         {showPkgModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#22131A]/40 backdrop-blur-md">
-            <div className="w-full max-w-md bg-white rounded-2xl p-6 border border-[#F0D5E2] shadow-xl space-y-4">
+            <div className="w-full max-w-md bg-white rounded-2xl p-6 border border-[#F0D5E2] shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between pb-3 border-b border-[#F0D5E2]">
                 <h3 className="text-base font-bold text-[#22131A] flex items-center gap-2">
                   <Package className="w-4 h-4 text-[#AA336A]" />
-                  Add New Service Package
+                  {editingPkgId ? 'Edit Package' : 'Add New Service Package'}
                 </h3>
                 <button
                   onClick={() => setShowPkgModal(false)}
@@ -288,7 +329,7 @@ export default function CategoriesPage() {
                 </button>
               </div>
 
-              <form onSubmit={handleCreatePackage} className="space-y-4">
+              <form onSubmit={handleSavePackage} className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold text-[#604453] uppercase mb-1">
                     Package Name
@@ -363,7 +404,7 @@ export default function CategoriesPage() {
                     type="submit"
                     className="px-5 py-2.5 rounded-xl bg-[#AA336A] text-white font-bold text-xs hover:bg-[#8E2656] shadow-md"
                   >
-                    Add Package
+                    {editingPkgId ? 'Update Package' : 'Add Package'}
                   </button>
                 </div>
               </form>

@@ -1,16 +1,43 @@
 const pool = require('../config/db');
 
-// GET /api/vendors - List all partner vendors from MySQL
+// GET /api/vendors - List all partner vendors from MySQL with city & category filters
 exports.getAllVendors = async (req, res) => {
   try {
-    const [rows] = await pool.execute(`
+    const { city, category } = req.query;
+    let sql = `
       SELECT v.*, c.name as category_name, COALESCE(u.email, 'vendor@shaadipro.com') as vendor_email, COALESCE(u.name, v.business_name) as contact_person
       FROM vendors v
       LEFT JOIN categories c ON v.category_id = c.id
       LEFT JOIN users u ON v.user_id = u.id
-      ORDER BY v.id
-    `);
-    return res.status(200).json({ success: true, count: rows.length, vendors: rows });
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (city && city !== 'all') {
+      sql += ' AND (LOWER(v.city) = LOWER(?) OR v.business_name LIKE ?)';
+      params.push(city, `%${city}%`);
+    }
+
+    if (category && category !== 'all') {
+      sql += ' AND LOWER(c.name) LIKE LOWER(?)';
+      params.push(`%${category}%`);
+    }
+
+    sql += ' ORDER BY v.id ASC';
+
+    try {
+      const [rows] = await pool.execute(sql, params);
+      return res.status(200).json({ success: true, count: rows.length, vendors: rows });
+    } catch (colErr) {
+      const [rows] = await pool.execute(`
+        SELECT v.*, c.name as category_name, COALESCE(u.email, 'vendor@shaadipro.com') as vendor_email, COALESCE(u.name, v.business_name) as contact_person
+        FROM vendors v
+        LEFT JOIN categories c ON v.category_id = c.id
+        LEFT JOIN users u ON v.user_id = u.id
+        ORDER BY v.id ASC
+      `);
+      return res.status(200).json({ success: true, count: rows.length, vendors: rows });
+    }
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Failed to fetch vendors from database', error: error.message });
   }

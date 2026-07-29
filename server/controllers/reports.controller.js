@@ -35,17 +35,28 @@ exports.getExecutiveAnalytics = async (req, res) => {
     ];
 
     try {
-      const [bRows] = await pool.execute('SELECT COUNT(*) as count, COALESCE(SUM(total_amount), 0) as sum FROM bookings WHERE status IN ("confirmed","completed")');
+      const [bRows] = await pool.execute(`
+        SELECT COUNT(*) as count,
+               COALESCE((
+                 SELECT SUM(bs.price)
+                 FROM booking_services bs
+                 JOIN bookings b2 ON bs.booking_id = b2.id
+                 WHERE b2.status IN ("confirmed","completed")
+               ), 0) as sum
+        FROM bookings
+        WHERE status IN ("confirmed","completed")
+      `);
+
       const [hRows] = await pool.execute('SELECT COUNT(*) as count FROM halls WHERE status = "active"');
       const [pRows] = await pool.execute('SELECT COALESCE(SUM(amount), 0) as total_paid FROM payments');
 
-      if (bRows && bRows[0].count > 0) {
+      if (bRows && bRows.length > 0) {
         confirmedCount = Number(bRows[0].count);
         totalRevenue = Number(bRows[0].sum || 4850000);
         const totalPaid = Number(pRows[0].total_paid || 0);
         pendingReceivables = Math.max(0, totalRevenue - totalPaid);
       }
-      if (hRows && hRows[0].count > 0) {
+      if (hRows && hRows.length > 0) {
         activeHallsCount = Number(hRows[0].count);
       }
 
@@ -71,7 +82,11 @@ exports.getExecutiveAnalytics = async (req, res) => {
 
       // Fetch DB Hall Performance
       const [hallPerfRows] = await pool.execute(`
-        SELECT h.name as hall_name, COUNT(b.id) as bookings, COALESCE(SUM(b.total_amount), 0) as revenue
+        SELECT h.name as hall_name,
+               COUNT(b.id) as bookings,
+               COALESCE(SUM(
+                 (SELECT COALESCE(SUM(bs.price), 0) FROM booking_services bs WHERE bs.booking_id = b.id)
+               ), 0) as revenue
         FROM halls h
         LEFT JOIN bookings b ON b.hall_id = h.id
         GROUP BY h.id, h.name

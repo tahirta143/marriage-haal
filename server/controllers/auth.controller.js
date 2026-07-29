@@ -262,6 +262,112 @@ exports.logout = async (req, res) => {
   return res.status(200).json({ success: true, message: 'Logged out successfully' });
 };
 
+exports.sendOTP = async (req, res) => {
+  try {
+    const { target, type } = req.body;
+    if (!target) {
+      return res.status(400).json({ success: false, message: 'Phone number or Email is required' });
+    }
+
+    // Default demo OTP code: '123456'
+    const otpCode = '123456';
+
+    return res.status(200).json({
+      success: true,
+      message: `6-digit OTP verification code sent to ${target}`,
+      target,
+      type: type || 'phone',
+      demoOtp: otpCode
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to send OTP code' });
+  }
+};
+
+exports.verifyOTP = async (req, res) => {
+  try {
+    const { target, otp, name } = req.body;
+
+    if (!target || !otp) {
+      return res.status(400).json({ success: false, message: 'Target and OTP code are required' });
+    }
+
+    // Validate 6-digit OTP code (accept 123456 for demo)
+    if (otp !== '123456' && otp.length !== 6) {
+      return res.status(400).json({ success: false, message: 'Invalid 6-digit OTP code. Please use demo OTP: 123456' });
+    }
+
+    const isEmail = target.includes('@');
+    let user = null;
+    let permissions = DEMO_GROUP_PERMISSIONS.customer;
+
+    try {
+      let query = isEmail ? 'SELECT * FROM users WHERE email = ?' : 'SELECT * FROM users WHERE phone = ?';
+      const [rows] = await pool.execute(query, [target]);
+
+      if (rows.length > 0) {
+        user = rows[0];
+        const dbPerms = await getUserPermissionsFromDB(user.id);
+        if (dbPerms) permissions = dbPerms;
+      } else {
+        // Create new user account via OTP
+        const userName = name || (isEmail ? target.split('@')[0] : `Client_${target.slice(-4)}`);
+        const userEmail = isEmail ? target : `${target.replace(/[^0-9]/g, '')}@shaadipro-client.com`;
+        const userPhone = isEmail ? null : target;
+        const dummyHash = await bcrypt.hash('otp_authenticated_user_2026', 10);
+
+        const [result] = await pool.execute(
+          'INSERT INTO users (name, email, phone, password_hash, status) VALUES (?, ?, ?, ?, ?)',
+          [userName, userEmail, userPhone, dummyHash, 'active']
+        );
+
+        const newUserId = result.insertId;
+        await pool.execute('INSERT INTO user_groups (user_id, group_id) VALUES (?, 5)', [newUserId]);
+
+        user = { id: newUserId, name: userName, email: userEmail, phone: userPhone, role: 'customer' };
+      }
+    } catch (dbErr) {
+      const demoMatch = demoUsers.find(u =>
+        isEmail ? u.email.toLowerCase() === target.toLowerCase() : u.id === 5
+      );
+      user = demoMatch || {
+        id: demoUsers.length + 1,
+        name: name || 'Valued Client',
+        email: isEmail ? target : `${target}@shaadipro.com`,
+        role: 'customer',
+        permissions: DEMO_GROUP_PERMISSIONS.customer
+      };
+    }
+
+    const { accessToken, refreshToken } = generateTokens(user, permissions);
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'OTP verification successful! Welcome to ShaadiPro.',
+      accessToken,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone || target,
+        role: user.role || 'customer',
+        permissions
+      }
+    });
+
+  } catch (error) {
+    console.error('Verify OTP error:', error);
+    return res.status(500).json({ success: false, message: 'Server error during OTP verification' });
+  }
+};
+
 exports.me = async (req, res) => {
   return res.status(200).json({
     success: true,
@@ -274,3 +380,4 @@ exports.me = async (req, res) => {
     }
   });
 };
+

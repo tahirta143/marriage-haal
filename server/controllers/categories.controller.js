@@ -46,6 +46,17 @@ exports.getCategoryById = async (req, res) => {
   }
 };
 
+// GET /api/categories/:id/sub-services - Fetch child sub-services for parent category
+exports.getSubServices = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [rows] = await pool.execute('SELECT * FROM sub_services WHERE category_id = ? ORDER BY id ASC', [id]);
+    return res.status(200).json({ success: true, count: rows.length, subServices: rows });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to fetch sub-services', error: error.message });
+  }
+};
+
 // POST /api/categories - Create new category
 exports.createCategory = async (req, res) => {
   try {

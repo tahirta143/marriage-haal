@@ -77,6 +77,35 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const sendOTP = async (target, type = 'phone') => {
+    try {
+      const res = await api.post('/auth/send-otp', { target, type });
+      if (res.data.success) {
+        return res.data;
+      }
+      throw new Error(res.data.message || 'Failed to send OTP code');
+    } catch (err) {
+      throw new Error(err.response?.data?.message || err.message || 'Failed to send OTP code');
+    }
+  };
+
+  const verifyOTP = async (target, otp, name) => {
+    try {
+      const res = await api.post('/auth/verify-otp', { target, otp, name });
+      if (res.data.success) {
+        const { accessToken, user } = res.data;
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('user', JSON.stringify(user));
+        setUser(user);
+        setPermissions(user.permissions || []);
+        return user;
+      }
+      throw new Error(res.data.message || 'OTP verification failed');
+    } catch (err) {
+      throw new Error(err.response?.data?.message || err.message || 'OTP verification failed');
+    }
+  };
+
   const logout = async () => {
     try {
       await api.post('/auth/logout');
@@ -85,7 +114,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
     setUser(null);
     setPermissions([]);
-    window.location.href = '/login';
+    window.location.href = '/';
   };
 
   const hasPermission = (permissionName) => {
@@ -93,7 +122,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, permissions, loading, login, register, logout, hasPermission }}>
+    <AuthContext.Provider value={{ user, permissions, loading, login, register, sendOTP, verifyOTP, logout, hasPermission }}>
       {children}
     </AuthContext.Provider>
   );

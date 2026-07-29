@@ -24,15 +24,24 @@ import {
   Plus,
   Minus,
   AlertCircle,
+  Car,
+  FileText,
 } from 'lucide-react';
 
 const CATEGORY_ICONS = {
   'Food & Catering': Utensils,
+  'Catering': Utensils,
   'Decor & Stage Setup': Paintbrush,
+  'Decor': Paintbrush,
   'Bridal Makeup': Sparkle,
   'Mehndi Artist': Sparkle,
+  'Henna Artists': Sparkle,
   'DJ & Sound System': Music,
   'Photography & Videography': Camera,
+  'Photographers': Camera,
+  'Car Rental': Car,
+  'Wedding Stationery': FileText,
+  'Wedding Venues': Building2,
 };
 
 export default function BookEventPage() {
@@ -49,7 +58,8 @@ export default function BookEventPage() {
 
   // Selection States
   const [selectedHall, setSelectedHall] = useState(null);
-  const [eventType, setEventType] = useState('baraat');
+  const [selectedVenueTypeFilter, setSelectedVenueTypeFilter] = useState('ALL');
+  const [eventType, setEventType] = useState('Barat Planning');
   const [eventDate, setEventDate] = useState('2026-10-24');
   const [eventSlot, setEventSlot] = useState('night');
   const [guestCount, setGuestCount] = useState(350);
@@ -339,10 +349,13 @@ export default function BookEventPage() {
                         onChange={(e) => setEventType(e.target.value)}
                         className="w-full px-4 py-3 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] font-bold uppercase focus:outline-none focus:border-[#AA336A]"
                       >
-                        <option value="baraat">Baraat Ceremony</option>
-                        <option value="walima">Walima Reception</option>
-                        <option value="mehndi">Mehndi Night</option>
-                        <option value="engagement">Engagement</option>
+                        <option value="Barat Planning">Barat Planning</option>
+                        <option value="Mehndi & Mayo">Mehndi & Mayo</option>
+                        <option value="Walima Reception">Walima Reception</option>
+                        <option value="Bridal Shower">Bridal Shower</option>
+                        <option value="Engagement">Engagement</option>
+                        <option value="Nikkah">Nikkah</option>
+                        <option value="Qawali Night">Qawali Night</option>
                       </select>
                     </div>
 

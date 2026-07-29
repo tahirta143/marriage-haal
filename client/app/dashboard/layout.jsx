@@ -23,6 +23,7 @@ import {
   BarChart3,
   HeartHandshake,
   UserCheck,
+  Home,
 } from 'lucide-react';
 
 export default function UnifiedDashboardLayout({ children }) {
@@ -50,6 +51,12 @@ export default function UnifiedDashboardLayout({ children }) {
   }
 
   const NAV_ITEMS = [
+    {
+      label: 'Home',
+      href: '/dashboard/home',
+      icon: Home,
+      permission: null,
+    },
     {
       label: 'Executive Overview',
       href: '/dashboard',
@@ -99,6 +106,12 @@ export default function UnifiedDashboardLayout({ children }) {
       permission: PERMISSIONS.CATEGORY_MANAGE,
     },
     {
+      label: 'Event Functions',
+      href: '/dashboard/events',
+      icon: Calendar,
+      permission: null,
+    },
+    {
       label: 'Vendors & Partners',
       href: '/dashboard/vendors',
       icon: Users,
@@ -125,7 +138,7 @@ export default function UnifiedDashboardLayout({ children }) {
   ];
 
   const visibleNavItems = NAV_ITEMS.filter((item) =>
-    permissions.includes(item.permission)
+    !item.permission || permissions.includes(item.permission)
   );
 
   return (

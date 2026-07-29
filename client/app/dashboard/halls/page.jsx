@@ -14,6 +14,8 @@ import {
   X,
   AlertCircle,
   Upload,
+  Edit2,
+  Trash2,
   Image as ImageIcon,
 } from 'lucide-react';
 
@@ -25,7 +27,9 @@ export default function HallsPage() {
 
   // Modal State
   const [showModal, setShowModal] = useState(false);
+  const [editingHallId, setEditingHallId] = useState(null);
   const [name, setName] = useState('');
+  const [venueType, setVenueType] = useState('Ballroom');
   const [capacityMin, setCapacityMin] = useState('200');
   const [capacityMax, setCapacityMax] = useState('800');
   const [address, setAddress] = useState('');
@@ -73,7 +77,36 @@ export default function HallsPage() {
     }
   };
 
-  const handleCreateHall = async (e) => {
+  const openCreateModal = () => {
+    setEditingHallId(null);
+    setName('');
+    setVenueType('Ballroom');
+    setCapacityMin('200');
+    setCapacityMax('800');
+    setAddress('');
+    setAmenitiesInput('AC, VIP Parking, Sound System, Backup Generator');
+    setImageUrl('');
+    setShowModal(true);
+  };
+
+  const openEditModal = (hall) => {
+    setEditingHallId(hall.id);
+    setName(hall.name);
+    setVenueType(hall.venue_type || 'Ballroom');
+    setCapacityMin(hall.capacity_min);
+    setCapacityMax(hall.capacity_max);
+    setAddress(hall.address || '');
+    const amenitiesArr = Array.isArray(hall.amenities)
+      ? hall.amenities
+      : typeof hall.amenities === 'string'
+      ? JSON.parse(hall.amenities)
+      : [];
+    setAmenitiesInput(amenitiesArr.join(', '));
+    setImageUrl(hall.image_url || '');
+    setShowModal(true);
+  };
+
+  const handleSaveHall = async (e) => {
     e.preventDefault();
     if (!name || !capacityMin || !capacityMax) return;
 
@@ -86,26 +119,48 @@ export default function HallsPage() {
         .map((s) => s.trim())
         .filter(Boolean);
 
-      const res = await api.post('/halls', {
+      const payload = {
         name,
+        venue_type: venueType,
         capacity_min: parseInt(capacityMin),
         capacity_max: parseInt(capacityMax),
         address,
         amenities: amenitiesArr,
         image_url: imageUrl,
-      });
+      };
 
+      if (editingHallId) {
+        // Update hall in MySQL
+        const res = await api.put(`/halls/${editingHallId}`, payload);
+        if (res.data.success) {
+          setFeedback(`Venue Hall '${name}' updated successfully in database.`);
+        }
+      } else {
+        // Create hall in MySQL
+        const res = await api.post('/halls', payload);
+        if (res.data.success) {
+          setFeedback(`Venue Hall '${name}' created successfully in database.`);
+        }
+      }
+
+      setShowModal(false);
+      fetchHalls();
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message || 'Failed to save venue hall';
+      setErrorMessage(msg);
+    }
+  };
+
+  const handleDeleteHall = async (hallId) => {
+    if (!confirm('Are you sure you want to delete this venue hall?')) return;
+    try {
+      const res = await api.delete(`/halls/${hallId}`);
       if (res.data.success) {
-        setFeedback(`Hall Venue '${name}' created successfully.`);
-        setShowModal(false);
-        setName('');
-        setAddress('');
-        setImageUrl('');
+        setFeedback('Venue hall deleted from database.');
         fetchHalls();
       }
     } catch (err) {
-      const msg = err.response?.data?.message || err.message || 'Failed to create hall venue';
-      setErrorMessage(msg);
+      alert('Failed to delete venue hall');
     }
   };
 
@@ -128,19 +183,19 @@ export default function HallsPage() {
               Venue Hall & Slot Roster
             </div>
             <h1 className="text-2xl font-extrabold font-serif-title text-[#22131A]">
-              Marriage Halls & Capacity Management
+              Venues Management (Add, Edit, Update, Delete)
             </h1>
             <p className="text-[#705562] text-xs mt-1 font-medium">
-              Manage venue halls, seating capacities, addresses, and slot operational rules.
+              Manage venue halls, seating capacities, addresses, amenities, and image cover URLs in MySQL database.
             </p>
           </div>
 
           <button
-            onClick={() => setShowModal(true)}
+            onClick={openCreateModal}
             className="px-4 py-2.5 rounded-xl bg-[#AA336A] hover:bg-[#8E2656] active:bg-[#77234A] text-white font-bold text-xs flex items-center gap-2 transition-colors self-start sm:self-auto shadow-lg glow-brand"
           >
             <Plus className="w-4 h-4" />
-            Add New Hall Venue
+            Add New Venue Hall
           </button>
         </div>
 
@@ -158,10 +213,10 @@ export default function HallsPage() {
           </div>
         )}
 
-        {/* Halls Grid with Images */}
+        {/* Halls Grid with Images & Action Buttons */}
         {loading ? (
           <div className="text-center py-12 text-[#705562] text-sm font-semibold">
-            Loading hall venues...
+            Loading database venue halls...
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -185,16 +240,35 @@ export default function HallsPage() {
                         className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                       />
                       <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-white/90 backdrop-blur-md text-[#AA336A] border border-[#F0D5E2] shadow-sm">
-                        {hall.status}
+                        {hall.venue_type || hall.status}
                       </div>
                     </div>
 
-                    <div className="p-6 space-y-3">
-                      <div>
-                        <h3 className="text-lg font-bold text-[#22131A]">{hall.name}</h3>
-                        <div className="text-xs text-[#705562] flex items-center gap-1 mt-1 font-medium">
-                          <MapPin className="w-3.5 h-3.5 text-[#AA336A] flex-shrink-0" />
-                          {hall.address || 'Lahore, Pakistan'}
+                    <div className="p-6 space-y-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h3 className="text-lg font-bold text-[#22131A]">{hall.name}</h3>
+                          <div className="text-xs text-[#705562] flex items-center gap-1 mt-1 font-medium">
+                            <MapPin className="w-3.5 h-3.5 text-[#AA336A] flex-shrink-0" />
+                            {hall.address || 'Lahore, Pakistan'}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => openEditModal(hall)}
+                            className="p-1.5 rounded-lg text-[#705562] hover:text-[#AA336A] hover:bg-[#FAF5F7] transition-colors"
+                            title="Edit Venue Hall"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteHall(hall.id)}
+                            className="p-1.5 rounded-lg text-[#9E7D8C] hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                            title="Delete Venue Hall"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </div>
 
@@ -225,14 +299,14 @@ export default function HallsPage() {
           </div>
         )}
 
-        {/* Modal: Create New Hall */}
+        {/* Modal: Create / Edit Hall */}
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#22131A]/40 backdrop-blur-md">
             <div className="w-full max-w-md bg-white rounded-2xl p-6 border border-[#F0D5E2] shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between pb-3 border-b border-[#F0D5E2]">
                 <h3 className="text-base font-bold text-[#22131A] flex items-center gap-2">
                   <Building2 className="w-4 h-4 text-[#AA336A]" />
-                  Add New Hall Venue
+                  {editingHallId ? 'Edit Venue Hall' : 'Add New Venue Hall'}
                 </h3>
                 <button
                   onClick={() => setShowModal(false)}
@@ -242,10 +316,10 @@ export default function HallsPage() {
                 </button>
               </div>
 
-              <form onSubmit={handleCreateHall} className="space-y-4">
+              <form onSubmit={handleSaveHall} className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold text-[#604453] uppercase mb-1">
-                    Hall Venue Name
+                    Venue Name
                   </label>
                   <input
                     type="text"
@@ -253,8 +327,26 @@ export default function HallsPage() {
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Royal Crystal Grand Ballroom"
                     required
-                    className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] focus:outline-none focus:border-[#AA336A] focus:ring-1 focus:ring-[#AA336A]"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] focus:outline-none focus:border-[#AA336A]"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#604453] uppercase mb-1">
+                    Venue Type
+                  </label>
+                  <select
+                    value={venueType}
+                    onChange={(e) => setVenueType(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A]"
+                  >
+                    <option value="Ballroom">Ballroom</option>
+                    <option value="Marquee">Marquee</option>
+                    <option value="Lawn">Lawn & Garden</option>
+                    <option value="Farmhouse">Farmhouse</option>
+                    <option value="Rooftop">Rooftop</option>
+                    <option value="Banquet">Banquet Hall</option>
+                  </select>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -268,7 +360,7 @@ export default function HallsPage() {
                       onChange={(e) => setCapacityMin(e.target.value)}
                       placeholder="200"
                       required
-                      className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] focus:outline-none focus:border-[#AA336A] focus:ring-1 focus:ring-[#AA336A]"
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A]"
                     />
                   </div>
 
@@ -282,7 +374,7 @@ export default function HallsPage() {
                       onChange={(e) => setCapacityMax(e.target.value)}
                       placeholder="800"
                       required
-                      className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] focus:outline-none focus:border-[#AA336A] focus:ring-1 focus:ring-[#AA336A]"
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A]"
                     />
                   </div>
                 </div>
@@ -296,7 +388,7 @@ export default function HallsPage() {
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     placeholder="Gulberg III, Lahore"
-                    className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] focus:outline-none focus:border-[#AA336A] focus:ring-1 focus:ring-[#AA336A]"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A]"
                   />
                 </div>
 
@@ -309,7 +401,7 @@ export default function HallsPage() {
                     value={amenitiesInput}
                     onChange={(e) => setAmenitiesInput(e.target.value)}
                     placeholder="AC, VIP Parking, Chandelier Lighting"
-                    className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] focus:outline-none focus:border-[#AA336A] focus:ring-1 focus:ring-[#AA336A]"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A]"
                   />
                 </div>
 
@@ -319,13 +411,11 @@ export default function HallsPage() {
                     Hall Cover Image (Upload or Paste URL)
                   </label>
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <label className="flex-1 px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-xs text-[#604453] hover:border-[#AA336A] cursor-pointer flex items-center justify-center gap-2 font-semibold">
-                        <Upload className="w-4 h-4 text-[#AA336A]" />
-                        <span>{uploading ? 'Uploading...' : 'Choose Image File (Multer)'}</span>
-                        <input type="file" onChange={handleFileUpload} accept="image/*" className="hidden" />
-                      </label>
-                    </div>
+                    <label className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-xs text-[#604453] hover:border-[#AA336A] cursor-pointer flex items-center justify-center gap-2 font-semibold">
+                      <Upload className="w-4 h-4 text-[#AA336A]" />
+                      <span>{uploading ? 'Uploading...' : 'Choose Image File (Multer)'}</span>
+                      <input type="file" onChange={handleFileUpload} accept="image/*" className="hidden" />
+                    </label>
                     <input
                       type="text"
                       value={imageUrl}
@@ -348,7 +438,7 @@ export default function HallsPage() {
                     type="submit"
                     className="px-5 py-2.5 rounded-xl bg-[#AA336A] text-white font-bold text-xs hover:bg-[#8E2656] shadow-md"
                   >
-                    Create Hall Venue
+                    {editingHallId ? 'Update Venue Hall' : 'Create Venue Hall'}
                   </button>
                 </div>
               </form>

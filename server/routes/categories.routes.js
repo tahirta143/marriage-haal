@@ -7,6 +7,7 @@ const requirePermission = require('../middleware/requirePermission');
 // Public read routes
 router.get('/', categoriesController.getAllCategories);
 router.get('/:id', categoriesController.getCategoryById);
+router.get('/:id/sub-services', categoriesController.getSubServices);
 
 // Protected Write routes (requires 'category.manage' permission)
 router.post('/', authMiddleware, requirePermission('category.manage'), categoriesController.createCategory);
