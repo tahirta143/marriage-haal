@@ -8,7 +8,8 @@ const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'shaadipro_super_secret
 // Helper: Query user's permissions from DB
 const getUserPermissionsFromDB = async (userId) => {
   try {
-    const [rows] = await pool.execute(`
+    // Get all granted permissions (from groups + direct grants)
+    const [granted] = await pool.execute(`
       SELECT DISTINCT p.name
       FROM permissions p
       JOIN group_permissions gp ON gp.permission_id = p.id
@@ -20,7 +21,15 @@ const getUserPermissionsFromDB = async (userId) => {
       WHERE up.user_id = ? AND up.effect = 'grant'
     `, [userId, userId]);
 
-    return rows.map(r => r.name);
+    // Get deny overrides and subtract them
+    const [denied] = await pool.execute(`
+      SELECT p.name FROM permissions p
+      JOIN user_permissions up ON up.permission_id = p.id
+      WHERE up.user_id = ? AND up.effect = 'deny'
+    `, [userId]);
+
+    const deniedSet = new Set(denied.map(r => r.name));
+    return granted.map(r => r.name).filter(name => !deniedSet.has(name));
   } catch (err) {
     console.warn('DB Permission Resolution failed, falling back:', err.message);
     return null;
@@ -149,11 +158,12 @@ exports.login = async (req, res) => {
     let user = null;
     let isMatch = false;
 
+    let permissions = [];
     try {
       const [rows] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
       if (rows.length > 0) {
         user = rows[0];
-        permissions = await getUserPermissionsFromDB(user.id);
+        permissions = await getUserPermissionsFromDB(user.id) || [];
         isMatch = await bcrypt.compare(password, user.password_hash);
       }
     } catch (dbErr) {}

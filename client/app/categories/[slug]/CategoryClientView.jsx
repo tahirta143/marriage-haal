@@ -55,178 +55,6 @@ const CATEGORY_SUBTITLES = {
   'dj-sound-system': 'High-power JBL sound towers, intelligent moving heads, smoke fountains, and DJ beats for your Qawali & sangeet night.',
 };
 
-// Rich VENDOR LISTING DATA items matched by category slug
-const MOCK_VENDORS_BY_SLUG = {
-  'bridal-makeup': [
-    {
-      id: 101,
-      name: 'Hifsa Khan Salon',
-      verified: true,
-      badge: 'Top Pick',
-      rating: 4.8,
-      reviewsCount: 208,
-      address: 'Sherpao Bridge, Abid Majeed Road, Lahore',
-      city: 'Lahore',
-      type: 'Salon',
-      startingPrice: 10000,
-      image: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=800&q=80',
-      description: "Hifsa Khan Salon's makeup artists are celebrated for their expertise in enhancing your natural beauty. With a passion for cosmetics and a commitment to personalized service, Hifsa Khan Salon makeup artists ensure you look and feel your absolute best.",
-      travelsHome: true,
-      servicesFor: 'Female',
-    },
-    {
-      id: 102,
-      name: 'Mehwish Almas Salon',
-      verified: true,
-      badge: 'Top Pick',
-      rating: 4.9,
-      reviewsCount: 191,
-      address: '35 Z, DHA Phase 3, Lahore',
-      city: 'Lahore',
-      type: 'Salon',
-      startingPrice: 5500,
-      image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80',
-      description: 'Mehwish Almas Bridal Salon is a favorite choice among brides who want a soft, elegant and professionally done bridal look. The salon offers complete bridal makeup, party makeup and hairstyling with special attention to skin prep.',
-      travelsHome: true,
-      servicesFor: 'Female',
-    },
-    {
-      id: 103,
-      name: 'AFM Salon & Studio',
-      verified: true,
-      badge: 'Popular',
-      rating: 4.7,
-      reviewsCount: 145,
-      address: 'Block 4, Gulshan-e-Iqbal, Karachi',
-      city: 'Karachi',
-      type: 'Salon',
-      startingPrice: 6000,
-      image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80',
-      description: 'AFM Salon specializes in women salon and bridal makeup services in Karachi. The salon ethos centers on offering the perfect blend of beauty and relaxation, catering exclusively to female clients with a flexible cancellation policy.',
-      travelsHome: false,
-      servicesFor: 'Female',
-    },
-    {
-      id: 104,
-      name: 'Nabila Signature Salon',
-      verified: true,
-      badge: 'Luxury',
-      rating: 4.9,
-      reviewsCount: 312,
-      address: 'F-7 Markaz, Islamabad',
-      city: 'Islamabad',
-      type: 'Salon',
-      startingPrice: 25000,
-      image: 'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?auto=format&fit=crop&w=800&q=80',
-      description: 'High-end luxury bridal makeover by senior master artists using premium international cosmetic brands. Includes hair extensions, jewelry setting, skin hydration glow treatments, and trial session.',
-      travelsHome: true,
-      servicesFor: 'Female',
-    },
-  ],
-  'photographers': [
-    {
-      id: 201,
-      name: 'Maha Wajahat Khan Photography',
-      verified: true,
-      badge: 'Top Pick',
-      rating: 4.9,
-      reviewsCount: 340,
-      address: 'Main Boulevard, Gulberg III, Lahore',
-      city: 'Lahore',
-      type: 'Studio',
-      startingPrice: 65000,
-      image: 'https://images.unsplash.com/photo-1537633552985-df8429e8048b?auto=format&fit=crop&w=800&q=80',
-      description: 'Pakistan premier luxury wedding photography team. Specializing in emotional candid captures, 4K 60fps cinematic teasers, drone aerial coverage, and handcrafted leather photo albums.',
-      travelsHome: true,
-      servicesFor: 'All',
-    },
-    {
-      id: 202,
-      name: 'Irfan Ahson Fine Art Films',
-      verified: true,
-      badge: 'Celebrity Choice',
-      rating: 5.0,
-      reviewsCount: 420,
-      address: 'DHA Phase 5, Lahore',
-      city: 'Lahore',
-      type: 'Studio',
-      startingPrice: 120000,
-      image: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80',
-      description: 'Royalty & celebrity wedding photography studio. Iconic portraiture, high-definition lighting, multi-cam live streaming, and full event videography team.',
-      travelsHome: true,
-      servicesFor: 'All',
-    },
-    {
-      id: 203,
-      name: 'Studio 360 Visuals',
-      verified: true,
-      badge: 'Budget Friendly',
-      rating: 4.7,
-      reviewsCount: 110,
-      address: 'Blue Area, Islamabad',
-      city: 'Islamabad',
-      type: 'Freelance',
-      startingPrice: 35000,
-      image: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80',
-      description: 'Creative youth photography squad offering affordable DSLR coverage, outdoor couple portrait shoot, short Instagram reels, and customized digital drive deliverables.',
-      travelsHome: true,
-      servicesFor: 'All',
-    },
-  ],
-  'catering': [
-    {
-      id: 301,
-      name: 'Royal Mughal Caterers & Chefs',
-      verified: true,
-      badge: 'Top Pick',
-      rating: 4.9,
-      reviewsCount: 290,
-      address: 'MM Alam Road, Lahore',
-      city: 'Lahore',
-      type: 'Master Chef',
-      startingPrice: 1650,
-      image: 'https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&w=800&q=80',
-      description: 'Exquisite Pakistani culinary experience. Specializing in mutton desi ghee karahi, chicken zafrani biryani, live reshmi kabab BBQ, live tandoor naans, and hot shahi kheer.',
-      travelsHome: true,
-      servicesFor: 'All',
-    },
-    {
-      id: 302,
-      name: 'Hanif Rajput Catering Services',
-      verified: true,
-      badge: 'Heritage',
-      rating: 4.8,
-      reviewsCount: 512,
-      address: 'Clifton Block 5, Karachi',
-      city: 'Karachi',
-      type: 'Master Chef',
-      startingPrice: 1800,
-      image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',
-      description: 'Decades of authentic royal catering tradition. Full-scale banquet setup, waiter uniform staff, premium bone china crockery, and live dessert cooking counters.',
-      travelsHome: true,
-      servicesFor: 'All',
-    },
-  ],
-  'decor': [
-    {
-      id: 401,
-      name: 'Qasim Yar Tiwana (QYT) Events & Decor',
-      verified: true,
-      badge: 'Top Pick',
-      rating: 5.0,
-      reviewsCount: 380,
-      address: 'Gulberg II, Lahore',
-      city: 'Lahore',
-      type: 'Designer',
-      startingPrice: 150000,
-      image: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=800&q=80',
-      description: 'Bespoke grand wedding decor. Majestic flower chandeliers, Mughal entrance gateways, velvet sofa seating, fairy light tunnels, and customized couple stage setups.',
-      travelsHome: true,
-      servicesFor: 'All',
-    },
-  ],
-};
-
 const BUDGET_OPTIONS = [
   { label: '0 - 8,000', min: 0, max: 8000 },
   { label: '8,001 - 20,000', min: 8001, max: 20000 },
@@ -257,6 +85,7 @@ export default function CategoryClientView({ slug }) {
   const [custPhone, setCustPhone] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState('');
+  const [inquiryError, setInquiryError] = useState('');
 
   const [dbVendors, setDbVendors] = useState([]);
   const [loadingDb, setLoadingDb] = useState(false);
@@ -265,10 +94,18 @@ export default function CategoryClientView({ slug }) {
 
   // Map category slugs to category IDs in MySQL
   const CATEGORY_SLUG_TO_ID = {
-    'catering': 1, 'decor': 2, 'bridal-makeup': 3,
-    'henna-artists': 4, 'dj-sound-system': 5, 'photographers': 6,
-    'car-rental': 7, 'wedding-stationery': 8,
+    'catering': 1,
+    'decor': 2,
+    'bridal-makeup': 3,
+    'henna-artists': 4,
+    'dj-sound-system': 5,
+    'photographers': 6,
+    'car-rental': 7,
+    'stationery': 8,         // fixed: was 'wedding-stationery'
   };
+
+  // Reverse map: category DB id → slug (to filter DB vendors by current page)
+  const CATEGORY_ID_FOR_SLUG = CATEGORY_SLUG_TO_ID[slug];
 
   useEffect(() => {
     fetchDbVendors();
@@ -291,28 +128,42 @@ export default function CategoryClientView({ slug }) {
   const fetchDbVendors = async () => {
     try {
       setLoadingDb(true);
-      const res = await api.get('/vendors');
+
+      // Build query: filter by category_id so only THIS category's vendors load
+      const catId = CATEGORY_SLUG_TO_ID[slug];
+      const queryParams = catId ? `?category_id=${catId}` : '';
+      const res = await api.get(`/vendors${queryParams}`);
+
       if (res.data.success && res.data.vendors.length > 0) {
-        const formatted = res.data.vendors.map((v) => ({
+        // Extra client-side guard: keep only vendors whose category_id matches
+        const relevant = catId
+          ? res.data.vendors.filter((v) => v.category_id === catId)
+          : res.data.vendors;
+
+        const formatted = relevant.map((v) => ({
           id: v.id,
           name: v.business_name,
           verified: v.status === 'approved',
           badge: 'Top Pick',
-          rating: 4.8,
-          reviewsCount: 150,
-          address: v.address || 'Lahore, Pakistan',
+          rating: parseFloat(v.rating) || 4.8,
+          reviewsCount: v.reviews || 150,
+          address: v.address || `${v.city || 'Lahore'}, Pakistan`,
           city: v.city || 'Lahore',
           type: v.category_name || 'Vendor',
-          startingPrice: 15000,
+          startingPrice: parseFloat(v.starting_price) || 15000,
           image: v.image_url || 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80',
-          description: `${v.business_name} provides professional services in ${selectedCity} with top ratings and high customer satisfaction.`,
+          description: `${v.business_name} provides professional ${v.category_name || 'wedding'} services in ${v.city || selectedCity} with top ratings and high customer satisfaction.`,
           travelsHome: true,
           servicesFor: 'All',
+          category_id: v.category_id,
         }));
         setDbVendors(formatted);
+      } else {
+        setDbVendors([]);
       }
     } catch (err) {
       console.error('Failed to load vendors from MySQL:', err);
+      setDbVendors([]);
     } finally {
       setLoadingDb(false);
     }
@@ -320,7 +171,8 @@ export default function CategoryClientView({ slug }) {
 
   const pageTitle = CATEGORY_TITLES[slug] || `Top Vendors in ${slug}`;
   const pageSubtitle = CATEGORY_SUBTITLES[slug] || 'Browse top rated vendors, compare pricing, and send direct availability inquiries.';
-  const rawVendors = dbVendors.length > 0 ? dbVendors : (MOCK_VENDORS_BY_SLUG[slug] || MOCK_VENDORS_BY_SLUG['bridal-makeup']);
+  // Only real DB data — no mock fallback
+  const rawVendors = dbVendors;
 
   // Toggle Budget Filter Checkboxes
   const handleBudgetToggle = (label) => {
@@ -367,25 +219,42 @@ export default function CategoryClientView({ slug }) {
     try {
       setSubmitting(true);
       setFeedback('');
+      setInquiryError('');
+
+      // Find first available hall from DB, or use fallback id=1
+      let hallId = 1;
+      try {
+        const hallRes = await api.get('/halls');
+        if (hallRes.data.success && hallRes.data.halls?.length > 0) {
+          hallId = hallRes.data.halls[0].id;
+        }
+      } catch (_) { }
 
       const payload = {
-        hall_id: 1,
+        hall_id: hallId,
         event_type: eventFunction,
         event_date: eventDate,
-        guest_count: guestCount,
+        guest_count: parseInt(guestCount) || 100,
         customer_phone: custPhone || user.phone || '+92 300 1234567',
         customer_name: user.name,
         customer_email: user.email,
-        selected_services: quoteModalTarget ? [quoteModalTarget] : [],
+        // Do not pass selected_services for a simple availability inquiry
+        // (no package_id selected yet — this is just an inquiry)
+        selected_services: [],
       };
 
       const res = await api.post('/bookings', payload);
       if (res.data.success) {
-        setFeedback(`Inquiry #${res.data.bookingId} submitted successfully! ${quoteModalTarget?.name} team will contact you at ${payload.customer_phone}.`);
-        setTimeout(() => setQuoteModalTarget(null), 3000);
+        setFeedback(
+          `✅ Inquiry #${res.data.bookingId} submitted! The ${quoteModalTarget?.name} team will contact you at ${payload.customer_phone} to confirm availability and pricing.`
+        );
+        setTimeout(() => setQuoteModalTarget(null), 4000);
+      } else {
+        setInquiryError(res.data.message || 'Failed to submit inquiry. Please try again.');
       }
     } catch (err) {
-      alert('Failed to submit inquiry');
+      const msg = err.response?.data?.message || err.message || 'Failed to submit inquiry.';
+      setInquiryError(msg);
     } finally {
       setSubmitting(false);
     }
@@ -418,11 +287,10 @@ export default function CategoryClientView({ slug }) {
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setSelectedSubService(null)}
-                className={`px-4 py-2 rounded-full border text-xs font-bold transition-all ${
-                  selectedSubService === null
+                className={`px-4 py-2 rounded-full border text-xs font-bold transition-all ${selectedSubService === null
                     ? 'bg-[#AA336A] text-white border-[#AA336A]'
                     : 'bg-white text-[#AA336A] border-[#AA336A] hover:bg-[#FFF0F6]'
-                }`}
+                  }`}
               >
                 All Services
               </button>
@@ -430,11 +298,10 @@ export default function CategoryClientView({ slug }) {
                 <button
                   key={ss.id}
                   onClick={() => setSelectedSubService(selectedSubService?.id === ss.id ? null : ss)}
-                  className={`px-4 py-2 rounded-full border text-xs font-bold transition-all ${
-                    selectedSubService?.id === ss.id
+                  className={`px-4 py-2 rounded-full border text-xs font-bold transition-all ${selectedSubService?.id === ss.id
                       ? 'bg-[#AA336A] text-white border-[#AA336A]'
                       : 'bg-white text-[#705562] border-[#E8C4D8] hover:bg-[#FFF0F6] hover:border-[#AA336A]'
-                  }`}
+                    }`}
                 >
                   {ss.name} · PKR {Number(ss.price).toLocaleString()}
                 </button>
@@ -607,14 +474,12 @@ export default function CategoryClientView({ slug }) {
               <button
                 type="button"
                 onClick={() => setTravelsHomeOnly(!travelsHomeOnly)}
-                className={`w-11 h-6 rounded-full p-1 transition-colors ${
-                  travelsHomeOnly ? 'bg-[#AA336A]' : 'bg-gray-200'
-                }`}
+                className={`w-11 h-6 rounded-full p-1 transition-colors ${travelsHomeOnly ? 'bg-[#AA336A]' : 'bg-gray-200'
+                  }`}
               >
                 <div
-                  className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                    travelsHomeOnly ? 'translate-x-5' : 'translate-x-0'
-                  }`}
+                  className={`w-4 h-4 rounded-full bg-white transition-transform ${travelsHomeOnly ? 'translate-x-5' : 'translate-x-0'
+                    }`}
                 />
               </button>
             </div>
@@ -636,7 +501,7 @@ export default function CategoryClientView({ slug }) {
             {/* Top Bar: Results Count */}
             <div className="flex items-center justify-between text-xs text-[#705562] font-bold border-b border-[#F0D5E2] pb-3">
               <span className="uppercase tracking-wider">
-                {displayVendors.length} OF {displayVendors.length} RESULTS
+                {loadingDb ? 'Loading...' : `${displayVendors.length} OF ${rawVendors.length} RESULTS`}
               </span>
 
               <div className="flex items-center gap-1">
@@ -645,79 +510,116 @@ export default function CategoryClientView({ slug }) {
               </div>
             </div>
 
-            {/* HORIZONTAL VENDOR CARDS LISTING (Shadiyana Exact Design) */}
-            <div className="space-y-6">
-              {displayVendors.map((vendor) => (
-                <div
-                  key={vendor.id}
-                  className="bg-white rounded-3xl border border-[#F0D5E2] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col md:flex-row items-stretch"
-                >
-                  {/* Left Widescreen Image Thumbnail */}
-                  <div className="w-full md:w-80 h-56 md:h-auto bg-gray-100 relative overflow-hidden flex-shrink-0">
-                    <img
-                      src={vendor.image}
-                      alt={vendor.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute top-3 left-3 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase bg-[#22131A] text-white shadow-md flex items-center gap-1">
-                      <Sparkles className="w-3 h-3 text-amber-300" />
-                      {vendor.badge || 'Verified'}
-                    </div>
-                  </div>
-
-                  {/* Right Card Details */}
-                  <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Link href="/venues/detail" className="text-xl font-bold font-serif-title text-[#22131A] hover:text-[#AA336A]">
-                          {vendor.name}
-                        </Link>
-                        <CheckCircle2 className="w-4 h-4 text-[#AA336A] flex-shrink-0" />
+            {/* Loading State */}
+            {loadingDb ? (
+              <div className="text-center py-20 text-[#705562] text-sm font-semibold">
+                <div className="w-8 h-8 border-2 border-[#AA336A] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                Loading vendors for this category...
+              </div>
+            ) : displayVendors.length === 0 ? (
+              /* Empty State */
+              <div className="text-center py-20 border border-dashed border-[#F0D5E2] rounded-3xl bg-white">
+                <div className="text-5xl mb-4">🔍</div>
+                <h3 className="text-base font-bold text-[#22131A] mb-2">No Vendors Found</h3>
+                <p className="text-xs text-[#705562] max-w-xs mx-auto">
+                  {rawVendors.length === 0
+                    ? 'No vendors have been registered in this category yet. Check back soon or explore other categories.'
+                    : 'No vendors match your current filters. Try adjusting the city or budget options.'}
+                </p>
+                {rawVendors.length > 0 && (
+                  <button
+                    onClick={() => {
+                      setSelectedBudgets([]);
+                      setVendorType('ALL');
+                      setTravelsHomeOnly(false);
+                    }}
+                    className="mt-4 px-4 py-2 rounded-xl bg-[#AA336A] text-white text-xs font-bold hover:bg-[#8E2656]"
+                  >
+                    Clear Filters
+                  </button>
+                )}
+              </div>
+            ) : (
+              /* HORIZONTAL VENDOR CARDS LISTING */
+              <div className="space-y-6">
+                {displayVendors.map((vendor) => (
+                  <div
+                    key={vendor.id}
+                    className="bg-white rounded-3xl border border-[#F0D5E2] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col md:flex-row items-stretch"
+                  >
+                    {/* Left Widescreen Image Thumbnail */}
+                    <Link href={`/vendors/${vendor.id}`} className="w-full md:w-80 h-56 md:h-auto bg-gray-100 relative overflow-hidden flex-shrink-0 group cursor-pointer block">
+                      <img
+                        src={vendor.image}
+                        alt={vendor.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute top-3 left-3 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase bg-[#22131A] text-white shadow-md flex items-center gap-1">
+                        <Sparkles className="w-3 h-3 text-amber-300" />
+                        {vendor.badge || 'Verified'}
                       </div>
+                    </Link>
 
-                      {/* Rating & Address */}
-                      <div className="flex items-center gap-2 text-xs font-semibold text-[#705562]">
-                        <div className="flex items-center gap-1 text-amber-500 font-bold">
-                          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                          <span>{vendor.rating}</span>
+                    {/* Right Card Details */}
+                    <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Link href={`/vendors/${vendor.id}`} className="text-xl font-bold font-serif-title text-[#22131A] hover:text-[#AA336A] transition-colors cursor-pointer">
+                            {vendor.name}
+                          </Link>
+                          {vendor.verified && <CheckCircle2 className="w-4 h-4 text-[#AA336A] flex-shrink-0" />}
                         </div>
-                        <span>({vendor.reviewsCount} reviews)</span>
-                        <span>•</span>
-                        <span className="flex items-center gap-1 text-[#604453] truncate max-w-xs">
-                          <MapPin className="w-3.5 h-3.5 text-[#AA336A]" />
-                          {vendor.address}
-                        </span>
+
+                        {/* Rating & Address */}
+                        <div className="flex items-center gap-2 text-xs font-semibold text-[#705562]">
+                          <div className="flex items-center gap-1 text-amber-500 font-bold">
+                            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                            <span>{vendor.rating}</span>
+                          </div>
+                          <span>({vendor.reviewsCount} reviews)</span>
+                          <span>•</span>
+                          <span className="flex items-center gap-1 text-[#604453] truncate max-w-xs">
+                            <MapPin className="w-3.5 h-3.5 text-[#AA336A]" />
+                            {vendor.address}
+                          </span>
+                        </div>
+
+                        {/* Description */}
+                        <p className="text-xs text-[#705562] font-medium leading-relaxed line-clamp-3">
+                          {vendor.description}
+                        </p>
                       </div>
 
-                      {/* Description */}
-                      <p className="text-xs text-[#705562] font-medium leading-relaxed line-clamp-3">
-                        {vendor.description}
-                      </p>
-                    </div>
+                      {/* Bottom Price & Action Buttons */}
+                      <div className="pt-4 border-t border-[#F0D5E2] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                          <span className="text-[11px] text-[#705562] block font-medium">Starting from</span>
+                          <span className="text-xl font-extrabold text-[#22131A] font-mono">
+                            PKR {vendor.startingPrice.toLocaleString()}
+                          </span>
+                        </div>
 
-                    {/* Bottom Price & Action Buttons */}
-                    <div className="pt-4 border-t border-[#F0D5E2] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div>
-                        <span className="text-[11px] text-[#705562] block font-medium">Starting from</span>
-                        <span className="text-xl font-extrabold text-[#22131A] font-mono">
-                          PKR {vendor.startingPrice.toLocaleString()}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Link
-                          href="/venues/detail"
-                          className="px-5 py-3 rounded-2xl bg-[#E33B70] hover:bg-[#AA336A] text-white font-extrabold text-xs uppercase tracking-wider shadow-md shadow-[#E33B70]/20 transition-all flex items-center gap-1.5"
-                        >
-                          <span>Check Availability & Pricing</span>
-                          <ArrowRight className="w-4 h-4" />
-                        </Link>
+                        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                          <Link
+                            href={`/vendors/${vendor.id}`}
+                            className="px-4 py-3 rounded-2xl bg-[#FAF5F7] border border-[#F0D5E2] text-[#AA336A] hover:bg-[#AA336A] hover:text-white font-extrabold text-xs transition-all text-center shadow-xs"
+                          >
+                            View Details
+                          </Link>
+                          <button
+                            onClick={() => setQuoteModalTarget(vendor)}
+                            className="px-5 py-3 rounded-2xl bg-[#E33B70] hover:bg-[#AA336A] text-white font-extrabold text-xs uppercase tracking-wider shadow-md shadow-[#E33B70]/20 transition-all flex items-center gap-1.5"
+                          >
+                            <span>Check Availability &amp; Pricing</span>
+                            <ArrowRight className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </main>
@@ -727,7 +629,7 @@ export default function CategoryClientView({ slug }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="relative w-full max-w-lg bg-white rounded-3xl p-6 sm:p-8 border border-[#F0D5E2] shadow-2xl space-y-5">
             <button
-              onClick={() => setQuoteModalTarget(null)}
+              onClick={() => { setQuoteModalTarget(null); setInquiryError(''); setFeedback(''); }}
               className="absolute top-5 right-5 p-2 rounded-full bg-gray-100 text-gray-500 hover:text-gray-800"
             >
               <X className="w-4 h-4" />
@@ -749,6 +651,13 @@ export default function CategoryClientView({ slug }) {
               <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
                 <span>{feedback}</span>
+              </div>
+            )}
+
+            {inquiryError && (
+              <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center gap-2">
+                <X className="w-4 h-4 text-rose-500 flex-shrink-0" />
+                <span>{inquiryError}</span>
               </div>
             )}
 

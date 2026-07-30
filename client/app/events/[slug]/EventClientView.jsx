@@ -275,11 +275,10 @@ export default function EventClientView({ slug }) {
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => setSelectedSubEvent(null)}
-                className={`px-4 py-2 rounded-full border text-xs font-bold transition-all ${
-                  selectedSubEvent === null
+                className={`px-4 py-2 rounded-full border text-xs font-bold transition-all ${selectedSubEvent === null
                     ? 'bg-[#AA336A] text-white border-[#AA336A]'
                     : 'bg-white text-[#AA336A] border-[#AA336A] hover:bg-[#FFF0F6]'
-                }`}
+                  }`}
               >
                 All Functions
               </button>
@@ -287,11 +286,10 @@ export default function EventClientView({ slug }) {
                 <button
                   key={se.id}
                   onClick={() => setSelectedSubEvent(se)}
-                  className={`px-4 py-2 rounded-full border text-xs font-bold transition-all ${
-                    selectedSubEvent?.id === se.id
+                  className={`px-4 py-2 rounded-full border text-xs font-bold transition-all ${selectedSubEvent?.id === se.id
                       ? 'bg-[#AA336A] text-white border-[#AA336A]'
                       : 'bg-white text-[#705562] border-[#E8C4D8] hover:bg-[#FFF0F6] hover:border-[#AA336A]'
-                  }`}
+                    }`}
                 >
                   {se.name}
                 </button>
@@ -327,11 +325,10 @@ export default function EventClientView({ slug }) {
               <button
                 key={c}
                 onClick={() => setCityForSection('venues', c)}
-                className={`pb-2 transition-all ${
-                  cityTabBySection.venues === c
+                className={`pb-2 transition-all ${cityTabBySection.venues === c
                     ? 'text-[#AA336A] border-b-2 border-[#AA336A]'
                     : 'text-gray-500 hover:text-[#AA336A]'
-                }`}
+                  }`}
               >
                 {c}
               </button>
@@ -342,12 +339,12 @@ export default function EventClientView({ slug }) {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {(dbHalls.length > 0
               ? dbHalls.map((h) => ({
-                  id: h.id,
-                  name: h.name,
-                  rating: 4.4,
-                  reviews: 24,
-                  image: h.image_url || 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=600&q=80',
-                }))
+                id: h.id,
+                name: h.name,
+                rating: 4.4,
+                reviews: 24,
+                image: h.image_url || 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=600&q=80',
+              }))
               : []
             ).map((v) => (
               <Link
@@ -387,11 +384,10 @@ export default function EventClientView({ slug }) {
               <button
                 key={c}
                 onClick={() => setCityForSection('photographers', c)}
-                className={`pb-2 transition-all ${
-                  cityTabBySection.photographers === c
+                className={`pb-2 transition-all ${cityTabBySection.photographers === c
                     ? 'text-amber-300 border-b-2 border-amber-300 font-extrabold'
                     : 'text-gray-400 hover:text-white'
-                }`}
+                  }`}
               >
                 {c}
               </button>
@@ -399,33 +395,36 @@ export default function EventClientView({ slug }) {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {(dbPhotographers.length > 0
-              ? dbPhotographers.map((p) => ({
-                  id: p.id,
-                  name: p.business_name,
-                  rating: 4.9,
-                  reviews: 120,
-                  image: p.image_url || 'https://images.unsplash.com/photo-1537633552985-df8429e8048b?auto=format&fit=crop&w=600&q=80',
-                }))
-              : []
-            ).map((v) => (
-              <Link
-                key={v.id}
-                href="/venues/detail"
-                className="group bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 overflow-hidden shadow-xs hover:border-amber-300/60 transition-all duration-200 cursor-pointer flex flex-col justify-between text-white"
-              >
-                <div className="h-36 w-full bg-gray-800 relative overflow-hidden">
-                  <img src={v.image} alt={v.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                </div>
-                <div className="p-3 space-y-1">
-                  <h3 className="text-xs font-bold truncate">{v.name}</h3>
-                  <div className="flex items-center gap-1 text-[11px] text-amber-300 font-semibold">
-                    <Star className="w-3 h-3 fill-amber-300 text-amber-300" />
-                    <span>{v.rating} ({v.reviews})</span>
+            {dbPhotographers.length > 0 ? (
+              dbPhotographers.map((p) => ({
+                id: p.id,
+                name: p.business_name,
+                rating: parseFloat(p.rating) || 4.9,
+                reviews: p.reviews || 120,
+                image: p.image_url || 'https://images.unsplash.com/photo-1537633552985-df8429e8048b?auto=format&fit=crop&w=600&q=80',
+              })).map((v) => (
+                <Link
+                  key={v.id}
+                  href={`/vendors/${v.id}`}
+                  className="group bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 overflow-hidden shadow-xs hover:border-amber-300/60 transition-all duration-200 cursor-pointer flex flex-col justify-between text-white"
+                >
+                  <div className="h-36 w-full bg-gray-800 relative overflow-hidden">
+                    <img src={v.image} alt={v.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   </div>
-                </div>
-              </Link>
-            ))}
+                  <div className="p-3 space-y-1">
+                    <h3 className="text-xs font-bold truncate">{v.name}</h3>
+                    <div className="flex items-center gap-1 text-[11px] text-amber-300 font-semibold">
+                      <Star className="w-3 h-3 fill-amber-300 text-amber-300" />
+                      <span>{v.rating} ({v.reviews})</span>
+                    </div>
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <div className="col-span-full p-6 rounded-2xl bg-white/5 border border-white/10 text-center text-xs text-gray-300 font-medium">
+                No photographers listed in {cityTabBySection.photographers} yet.
+              </div>
+            )}
           </div>
         </div>
 
@@ -446,11 +445,10 @@ export default function EventClientView({ slug }) {
               <button
                 key={c}
                 onClick={() => setCityForSection('makeup', c)}
-                className={`pb-2 transition-all ${
-                  cityTabBySection.makeup === c
+                className={`pb-2 transition-all ${cityTabBySection.makeup === c
                     ? 'text-[#AA336A] border-b-2 border-[#AA336A]'
                     : 'text-gray-500 hover:text-[#AA336A]'
-                }`}
+                  }`}
               >
                 {c}
               </button>
@@ -458,33 +456,36 @@ export default function EventClientView({ slug }) {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {(dbMakeup.length > 0
-              ? dbMakeup.map((m) => ({
-                  id: m.id,
-                  name: m.business_name,
-                  rating: 4.8,
-                  reviews: 95,
-                  image: m.image_url || 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=600&q=80',
-                }))
-              : []
-            ).map((v) => (
-              <Link
-                key={v.id}
-                href="/venues/detail"
-                className="group bg-white rounded-2xl border border-[#F0D5E2] overflow-hidden shadow-xs hover:shadow-lg transition-all duration-200 cursor-pointer flex flex-col justify-between"
-              >
-                <div className="h-36 w-full bg-gray-100 relative overflow-hidden">
-                  <img src={v.image} alt={v.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                </div>
-                <div className="p-3 space-y-1">
-                  <h3 className="text-xs font-bold text-[#22131A] truncate">{v.name}</h3>
-                  <div className="flex items-center gap-1 text-[11px] text-[#705562] font-semibold">
-                    <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                    <span>{v.rating} ({v.reviews})</span>
+            {dbMakeup.length > 0 ? (
+              dbMakeup.map((m) => ({
+                id: m.id,
+                name: m.business_name,
+                rating: parseFloat(m.rating) || 4.8,
+                reviews: m.reviews || 95,
+                image: m.image_url || 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=600&q=80',
+              })).map((v) => (
+                <Link
+                  key={v.id}
+                  href={`/vendors/${v.id}`}
+                  className="group bg-white rounded-2xl border border-[#F0D5E2] overflow-hidden shadow-xs hover:shadow-lg transition-all duration-200 cursor-pointer flex flex-col justify-between"
+                >
+                  <div className="h-36 w-full bg-gray-100 relative overflow-hidden">
+                    <img src={v.image} alt={v.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   </div>
-                </div>
-              </Link>
-            ))}
+                  <div className="p-3 space-y-1">
+                    <h3 className="text-xs font-bold text-[#22131A] truncate">{v.name}</h3>
+                    <div className="flex items-center gap-1 text-[11px] text-[#705562] font-semibold">
+                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                      <span>{v.rating} ({v.reviews})</span>
+                    </div>
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <div className="col-span-full p-6 rounded-2xl bg-[#FAF5F7] border border-[#F0D5E2] text-center text-xs text-[#705562] font-medium">
+                No bridal makeup artists listed in {cityTabBySection.makeup} yet.
+              </div>
+            )}
           </div>
         </div>
 
@@ -505,11 +506,10 @@ export default function EventClientView({ slug }) {
               <button
                 key={c}
                 onClick={() => setCityForSection('decor', c)}
-                className={`pb-2 transition-all ${
-                  cityTabBySection.decor === c
+                className={`pb-2 transition-all ${cityTabBySection.decor === c
                     ? 'text-amber-300 border-b-2 border-amber-300 font-extrabold'
                     : 'text-gray-400 hover:text-white'
-                }`}
+                  }`}
               >
                 {c}
               </button>
@@ -517,33 +517,36 @@ export default function EventClientView({ slug }) {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {(dbDecor.length > 0
-              ? dbDecor.map((d) => ({
-                  id: d.id,
-                  name: d.business_name,
-                  rating: 5.0,
-                  reviews: 140,
-                  image: d.image_url || 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=600&q=80',
-                }))
-              : []
-            ).map((v) => (
-              <Link
-                key={v.id}
-                href="/venues/detail"
-                className="group bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 overflow-hidden shadow-xs hover:border-amber-300/60 transition-all duration-200 cursor-pointer flex flex-col justify-between text-white"
-              >
-                <div className="h-36 w-full bg-gray-800 relative overflow-hidden">
-                  <img src={v.image} alt={v.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                </div>
-                <div className="p-3 space-y-1">
-                  <h3 className="text-xs font-bold truncate">{v.name}</h3>
-                  <div className="flex items-center gap-1 text-[11px] text-amber-300 font-semibold">
-                    <Star className="w-3 h-3 fill-amber-300 text-amber-300" />
-                    <span>{v.rating} ({v.reviews})</span>
+            {dbDecor.length > 0 ? (
+              dbDecor.map((d) => ({
+                id: d.id,
+                name: d.business_name,
+                rating: parseFloat(d.rating) || 5.0,
+                reviews: d.reviews || 140,
+                image: d.image_url || 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=600&q=80',
+              })).map((v) => (
+                <Link
+                  key={v.id}
+                  href={`/vendors/${v.id}`}
+                  className="group bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 overflow-hidden shadow-xs hover:border-amber-300/60 transition-all duration-200 cursor-pointer flex flex-col justify-between text-white"
+                >
+                  <div className="h-36 w-full bg-gray-800 relative overflow-hidden">
+                    <img src={v.image} alt={v.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   </div>
-                </div>
-              </Link>
-            ))}
+                  <div className="p-3 space-y-1">
+                    <h3 className="text-xs font-bold truncate">{v.name}</h3>
+                    <div className="flex items-center gap-1 text-[11px] text-amber-300 font-semibold">
+                      <Star className="w-3 h-3 fill-amber-300 text-amber-300" />
+                      <span>{v.rating} ({v.reviews})</span>
+                    </div>
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <div className="col-span-full p-6 rounded-2xl bg-white/5 border border-white/10 text-center text-xs text-gray-300 font-medium">
+                No decor vendors listed in {cityTabBySection.decor} yet.
+              </div>
+            )}
           </div>
         </div>
 
@@ -564,11 +567,10 @@ export default function EventClientView({ slug }) {
               <button
                 key={c}
                 onClick={() => setCityForSection('catering', c)}
-                className={`pb-2 transition-all ${
-                  cityTabBySection.catering === c
+                className={`pb-2 transition-all ${cityTabBySection.catering === c
                     ? 'text-[#AA336A] border-b-2 border-[#AA336A]'
                     : 'text-gray-500 hover:text-[#AA336A]'
-                }`}
+                  }`}
               >
                 {c}
               </button>
@@ -576,33 +578,36 @@ export default function EventClientView({ slug }) {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {(dbCatering.length > 0
-              ? dbCatering.map((c) => ({
-                  id: c.id,
-                  name: c.business_name,
-                  rating: 4.6,
-                  reviews: 210,
-                  image: c.image_url || 'https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&w=600&q=80',
-                }))
-              : []
-            ).map((v) => (
-              <Link
-                key={v.id}
-                href="/venues/detail"
-                className="group bg-white rounded-2xl border border-[#F0D5E2] overflow-hidden shadow-xs hover:shadow-lg transition-all duration-200 cursor-pointer flex flex-col justify-between"
-              >
-                <div className="h-36 w-full bg-gray-100 relative overflow-hidden">
-                  <img src={v.image} alt={v.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                </div>
-                <div className="p-3 space-y-1">
-                  <h3 className="text-xs font-bold text-[#22131A] truncate">{v.name}</h3>
-                  <div className="flex items-center gap-1 text-[11px] text-[#705562] font-semibold">
-                    <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                    <span>{v.rating} ({v.reviews})</span>
+            {dbCatering.length > 0 ? (
+              dbCatering.map((c) => ({
+                id: c.id,
+                name: c.business_name,
+                rating: parseFloat(c.rating) || 4.6,
+                reviews: c.reviews || 210,
+                image: c.image_url || 'https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&w=600&q=80',
+              })).map((v) => (
+                <Link
+                  key={v.id}
+                  href={`/vendors/${v.id}`}
+                  className="group bg-white rounded-2xl border border-[#F0D5E2] overflow-hidden shadow-xs hover:shadow-lg transition-all duration-200 cursor-pointer flex flex-col justify-between"
+                >
+                  <div className="h-36 w-full bg-gray-100 relative overflow-hidden">
+                    <img src={v.image} alt={v.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   </div>
-                </div>
-              </Link>
-            ))}
+                  <div className="p-3 space-y-1">
+                    <h3 className="text-xs font-bold text-[#22131A] truncate">{v.name}</h3>
+                    <div className="flex items-center gap-1 text-[11px] text-[#705562] font-semibold">
+                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                      <span>{v.rating} ({v.reviews})</span>
+                    </div>
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <div className="col-span-full p-6 rounded-2xl bg-[#FAF5F7] border border-[#F0D5E2] text-center text-xs text-[#705562] font-medium">
+                No catering vendors listed in {cityTabBySection.catering} yet.
+              </div>
+            )}
           </div>
         </div>
 
@@ -623,11 +628,10 @@ export default function EventClientView({ slug }) {
               <button
                 key={c}
                 onClick={() => setCityForSection('henna', c)}
-                className={`pb-2 transition-all ${
-                  cityTabBySection.henna === c
+                className={`pb-2 transition-all ${cityTabBySection.henna === c
                     ? 'text-[#AA336A] border-b-2 border-[#AA336A]'
                     : 'text-gray-500 hover:text-[#AA336A]'
-                }`}
+                  }`}
               >
                 {c}
               </button>
@@ -635,33 +639,36 @@ export default function EventClientView({ slug }) {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {(dbHenna.length > 0
-              ? dbHenna.map((hn) => ({
-                  id: hn.id,
-                  name: hn.business_name,
-                  rating: 4.9,
-                  reviews: 310,
-                  image: hn.image_url || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=600&q=80',
-                }))
-              : []
-            ).map((v) => (
-              <Link
-                key={v.id}
-                href="/venues/detail"
-                className="group bg-white rounded-2xl border border-[#F0D5E2] overflow-hidden shadow-xs hover:shadow-lg transition-all duration-200 cursor-pointer flex flex-col justify-between"
-              >
-                <div className="h-36 w-full bg-gray-100 relative overflow-hidden">
-                  <img src={v.image} alt={v.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                </div>
-                <div className="p-3 space-y-1">
-                  <h3 className="text-xs font-bold text-[#22131A] truncate">{v.name}</h3>
-                  <div className="flex items-center gap-1 text-[11px] text-[#705562] font-semibold">
-                    <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                    <span>{v.rating} ({v.reviews})</span>
+            {dbHenna.length > 0 ? (
+              dbHenna.map((hn) => ({
+                id: hn.id,
+                name: hn.business_name,
+                rating: parseFloat(hn.rating) || 4.9,
+                reviews: hn.reviews || 310,
+                image: hn.image_url || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=600&q=80',
+              })).map((v) => (
+                <Link
+                  key={v.id}
+                  href={`/vendors/${v.id}`}
+                  className="group bg-white rounded-2xl border border-[#F0D5E2] overflow-hidden shadow-xs hover:shadow-lg transition-all duration-200 cursor-pointer flex flex-col justify-between"
+                >
+                  <div className="h-36 w-full bg-gray-100 relative overflow-hidden">
+                    <img src={v.image} alt={v.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   </div>
-                </div>
-              </Link>
-            ))}
+                  <div className="p-3 space-y-1">
+                    <h3 className="text-xs font-bold text-[#22131A] truncate">{v.name}</h3>
+                    <div className="flex items-center gap-1 text-[11px] text-[#705562] font-semibold">
+                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                      <span>{v.rating} ({v.reviews})</span>
+                    </div>
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <div className="col-span-full p-6 rounded-2xl bg-[#FAF5F7] border border-[#F0D5E2] text-center text-xs text-[#705562] font-medium">
+                No henna artists listed in {cityTabBySection.henna} yet.
+              </div>
+            )}
           </div>
         </div>
       </main>

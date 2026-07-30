@@ -124,11 +124,10 @@ export default function VenuesListingPage() {
               <button
                 key={vType}
                 onClick={() => setSelectedVenueType(vType)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all uppercase ${
-                  selectedVenueType === vType
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all uppercase ${selectedVenueType === vType
                     ? 'bg-[#AA336A] text-white shadow-md'
                     : 'bg-white border border-[#F0D5E2] text-[#604453] hover:bg-[#FAF5F7]'
-                }`}
+                  }`}
               >
                 {vType === 'ALL' ? 'All Properties' : vType}
               </button>
@@ -148,8 +147,8 @@ export default function VenuesListingPage() {
               const amenitiesList = Array.isArray(hall.amenities)
                 ? hall.amenities
                 : typeof hall.amenities === 'string'
-                ? JSON.parse(hall.amenities)
-                : ['AC', 'VIP Parking', 'Sound System'];
+                  ? JSON.parse(hall.amenities)
+                  : ['AC', 'VIP Parking', 'Sound System'];
 
               return (
                 <div

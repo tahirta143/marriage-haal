@@ -54,6 +54,8 @@ export default function VenueDetailClientView() {
   const { user } = useAuth();
   const [selectedCity, setSelectedCity] = useState('Lahore');
   const [activeTab, setActiveTab] = useState('Details');
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   // Dynamic Hall State
   const [hallData, setHallData] = useState(null);
@@ -93,7 +95,7 @@ export default function VenueDetailClientView() {
             if (svRes.data.success && svRes.data.subVenues.length > 0) {
               setSubVenues(svRes.data.subVenues);
             }
-          } catch (svErr) {}
+          } catch (svErr) { }
           return;
         }
       }
@@ -121,12 +123,22 @@ export default function VenueDetailClientView() {
   const capMax = hallData?.capacity_max || 1000;
   const coverImage = hallData?.image_url || 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=1200&q=80';
 
+  const galleryImages = Array.from(
+    new Set(
+      [
+        coverImage,
+        ...(hallData?.gallery ? (typeof hallData.gallery === 'string' ? JSON.parse(hallData.gallery) : hallData.gallery) : []),
+        ...subVenues.map((sv) => sv.image_url).filter(Boolean),
+      ].filter(Boolean)
+    )
+  );
+
   let amenitiesList = ['Generator Backup', 'Bridal Room', 'DJ & Sound System', 'Valet Parking', 'Air Conditioning'];
   if (hallData?.amenities) {
     try {
       const parsed = typeof hallData.amenities === 'string' ? JSON.parse(hallData.amenities) : hallData.amenities;
       if (Array.isArray(parsed) && parsed.length > 0) amenitiesList = parsed;
-    } catch (e) {}
+    } catch (e) { }
   }
 
   const totalCalculatedPrice = selectedMenu.pricePerHead * guestCount;
@@ -184,11 +196,10 @@ export default function VenueDetailClientView() {
             <button
               key={tab}
               onClick={() => handleTabClick(tab)}
-              className={`py-3.5 border-b-2 transition-all ${
-                activeTab === tab
+              className={`py-3.5 border-b-2 transition-all ${activeTab === tab
                   ? 'border-[#AA336A] text-[#AA336A] font-bold'
                   : 'border-transparent text-gray-500 hover:text-[#AA336A]'
-              }`}
+                }`}
             >
               {tab}
             </button>
@@ -210,11 +221,10 @@ export default function VenueDetailClientView() {
                 <div
                   key={sv.id}
                   onClick={() => setSelectedSubVenue(selectedSubVenue?.id === sv.id ? null : sv)}
-                  className={`rounded-2xl border cursor-pointer overflow-hidden transition-all hover:shadow-lg ${
-                    selectedSubVenue?.id === sv.id
+                  className={`rounded-2xl border cursor-pointer overflow-hidden transition-all hover:shadow-lg ${selectedSubVenue?.id === sv.id
                       ? 'border-[#AA336A] ring-2 ring-[#AA336A] shadow-md'
                       : 'border-[#F0D5E2] hover:border-[#E8C4D8]'
-                  }`}
+                    }`}
                 >
                   {sv.image_url && (
                     <img src={sv.image_url} alt={sv.name} className="w-full h-32 object-cover" />
@@ -352,27 +362,45 @@ export default function VenueDetailClientView() {
             </div>
 
             <div className="rounded-3xl overflow-hidden border border-[#F0D5E2] shadow-lg p-2 bg-white space-y-2">
-              <div className="h-64 w-full rounded-2xl overflow-hidden relative">
-                <img src={coverImage} alt={venueName} className="w-full h-full object-cover" />
+              <div 
+                onClick={() => setLightboxOpen(true)}
+                className="h-80 w-full rounded-2xl overflow-hidden relative cursor-pointer group"
+              >
+                <img 
+                  src={galleryImages[selectedImageIndex] || galleryImages[0] || coverImage} 
+                  alt={venueName} 
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
+                />
+                <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-extrabold text-xs">
+                  Click to View Fullscreen
+                </div>
               </div>
 
-              <div className="grid grid-cols-4 gap-2">
-                <div className="h-24 rounded-xl overflow-hidden">
-                  <img src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=400&q=80" alt="Gallery 1" className="w-full h-full object-cover" />
+              {galleryImages.length > 1 && (
+                <div className={`grid gap-2 ${galleryImages.length === 2 ? 'grid-cols-2' : galleryImages.length === 3 ? 'grid-cols-3' : 'grid-cols-4'}`}>
+                  {galleryImages.slice(0, 4).map((img, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setSelectedImageIndex(i)}
+                      className={`h-24 rounded-xl overflow-hidden relative transition-all border-2 text-left ${
+                        selectedImageIndex === i
+                          ? 'border-[#AA336A] ring-2 ring-[#AA336A]/30 scale-[0.98]'
+                          : 'border-transparent hover:opacity-90'
+                      }`}
+                    >
+                      <img src={img} alt={`${venueName} ${i + 1}`} className="w-full h-full object-cover" />
+                      {i === 3 && galleryImages.length > 4 && (
+                        <div 
+                          onClick={(e) => { e.stopPropagation(); setLightboxOpen(true); }}
+                          className="absolute inset-0 bg-black/60 flex items-center justify-center text-white font-extrabold text-xs hover:bg-black/70"
+                        >
+                          +{galleryImages.length - 4} Photos
+                        </div>
+                      )}
+                    </button>
+                  ))}
                 </div>
-                <div className="h-24 rounded-xl overflow-hidden">
-                  <img src="https://images.unsplash.com/photo-1545232979-fbfd42e20068?auto=format&fit=crop&w=400&q=80" alt="Gallery 2" className="w-full h-full object-cover" />
-                </div>
-                <div className="h-24 rounded-xl overflow-hidden">
-                  <img src="https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=400&q=80" alt="Gallery 3" className="w-full h-full object-cover" />
-                </div>
-                <div className="h-24 rounded-xl overflow-hidden relative">
-                  <img src="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=400&q=80" alt="Gallery 4" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white font-extrabold text-xs">
-                    +12 Photos
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
 
             <div className="text-right pt-2">
@@ -434,11 +462,10 @@ export default function VenueDetailClientView() {
                 <button
                   key={menu.id}
                   onClick={() => setSelectedMenu(menu)}
-                  className={`w-full p-3.5 rounded-2xl text-left border text-xs font-extrabold transition-all flex items-center justify-between ${
-                    selectedMenu.id === menu.id
+                  className={`w-full p-3.5 rounded-2xl text-left border text-xs font-extrabold transition-all flex items-center justify-between ${selectedMenu.id === menu.id
                       ? 'bg-[#E33B70] text-white border-[#E33B70] shadow-md'
                       : 'bg-gray-50 border-[#F0D5E2] text-[#604453] hover:bg-[#FAF5F7]'
-                  }`}
+                    }`}
                 >
                   <div>
                     <div>{menu.name}</div>
@@ -535,13 +562,12 @@ export default function VenueDetailClientView() {
                           key={dayNum}
                           disabled={isPast}
                           onClick={() => !isPast && setSelectedDay(dayNum)}
-                          className={`py-1.5 rounded-full text-xs transition-all flex items-center justify-center font-semibold ${
-                            isSelected
+                          className={`py-1.5 rounded-full text-xs transition-all flex items-center justify-center font-semibold ${isSelected
                               ? 'bg-[#E33B70] text-white font-extrabold shadow-md'
                               : isPast
-                              ? 'text-gray-300 cursor-not-allowed bg-gray-50/50 line-through opacity-50'
-                              : 'hover:bg-rose-50 text-[#22131A]'
-                          }`}
+                                ? 'text-gray-300 cursor-not-allowed bg-gray-50/50 line-through opacity-50'
+                                : 'hover:bg-rose-50 text-[#22131A]'
+                            }`}
                         >
                           {dayNum}
                         </button>
@@ -624,6 +650,43 @@ export default function VenueDetailClientView() {
         onClose={() => setAuthModalOpen(false)}
         onSuccess={() => setAuthModalOpen(false)}
       />
+
+      {/* Fullscreen Gallery Lightbox */}
+      {lightboxOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+          <button
+            onClick={() => setLightboxOpen(false)}
+            className="absolute top-5 right-5 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-50"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          <button
+            onClick={() => setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : galleryImages.length - 1))}
+            className="absolute left-5 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-50"
+          >
+            <ChevronLeft className="w-8 h-8" />
+          </button>
+
+          <div className="max-w-4xl max-h-[85vh] p-2 flex flex-col items-center space-y-4">
+            <img
+              src={galleryImages[selectedImageIndex] || coverImage}
+              alt={venueName}
+              className="max-h-[75vh] max-w-full object-contain rounded-2xl shadow-2xl"
+            />
+            <div className="text-white text-xs font-bold font-mono bg-white/10 px-4 py-1.5 rounded-full">
+              Photo {selectedImageIndex + 1} of {galleryImages.length}
+            </div>
+          </div>
+
+          <button
+            onClick={() => setSelectedImageIndex((prev) => (prev < galleryImages.length - 1 ? prev + 1 : 0))}
+            className="absolute right-5 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-50"
+          >
+            <ChevronRight className="w-8 h-8" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -65,7 +65,7 @@ exports.getBookingById = async (req, res) => {
   }
 };
 
-// POST /api/bookings - Create new booking with itemized services in MySQL
+// POST /api/bookings - Create new booking inquiry in MySQL
 exports.createBooking = async (req, res) => {
   try {
     const {
@@ -80,56 +80,113 @@ exports.createBooking = async (req, res) => {
       selected_services
     } = req.body;
 
-    if (!hall_id || !event_type || !event_date || !guest_count) {
-      return res.status(400).json({ success: false, message: 'Hall, event type, date, and guest count are required' });
+    if (!event_type || !event_date || !guest_count) {
+      return res.status(400).json({ success: false, message: 'Event type, date, and guest count are required' });
     }
 
-    const guests = parseInt(guest_count);
-    const servicesList = selected_services || [];
+    const guests = parseInt(guest_count) || 100;
+    const servicesList = Array.isArray(selected_services) ? selected_services : [];
 
-    // Resolve valid Customer ID from users table
-    let customerId = req.user?.id;
-    if (!customerId) {
-      const [uRows] = await pool.execute('SELECT id FROM users WHERE email = ? LIMIT 1', [customer_email || 'customer@shaadipro.com']);
-      if (uRows.length > 0) {
-        customerId = uRows[0].id;
-      } else {
-        const [anyUser] = await pool.execute('SELECT id FROM users ORDER BY id ASC LIMIT 1');
-        customerId = anyUser.length > 0 ? anyUser[0].id : 1;
+    // ── Resolve Hall ──────────────────────────────────────────────────
+    // Try the requested hall_id first; if it doesn't exist, fall back to first available hall
+    let resolvedHallId = parseInt(hall_id) || 1;
+    try {
+      const [hallCheck] = await pool.execute('SELECT id FROM halls WHERE id = ? LIMIT 1', [resolvedHallId]);
+      if (hallCheck.length === 0) {
+        const [firstHall] = await pool.execute('SELECT id FROM halls ORDER BY id ASC LIMIT 1');
+        if (firstHall.length > 0) {
+          resolvedHallId = firstHall[0].id;
+        } else {
+          // No halls in DB at all — create a placeholder
+          const [hallRes] = await pool.execute(
+            "INSERT INTO halls (name, city, venue_type, capacity_min, capacity_max, status) VALUES (?, 'Lahore', 'Ballroom', 100, 1000, 'active')",
+            ['ShaadiPro Main Hall']
+          );
+          resolvedHallId = hallRes.insertId;
+        }
+      }
+    } catch (hallErr) {
+      console.warn('Hall resolution warning:', hallErr.message);
+    }
+
+    // ── Resolve Customer ──────────────────────────────────────────────
+    let customerId = req.user?.id || null;
+
+    if (!customerId && customer_email) {
+      try {
+        const [uRows] = await pool.execute('SELECT id FROM users WHERE email = ? LIMIT 1', [customer_email]);
+        if (uRows.length > 0) {
+          customerId = uRows[0].id;
+        } else {
+          // Guest inquiry: create a lightweight user record
+          const guestName = customer_name || 'Guest Inquiry';
+          const guestEmail = customer_email;
+          const guestPhone = customer_phone || null;
+          const bcrypt = require('bcryptjs');
+          const guestHash = await bcrypt.hash(`guest_${Date.now()}`, 8);
+          const [newUser] = await pool.execute(
+            'INSERT INTO users (name, email, phone, password_hash, status) VALUES (?, ?, ?, ?, ?)',
+            [guestName, guestEmail, guestPhone, guestHash, 'active']
+          );
+          customerId = newUser.insertId;
+          // Assign to Customer group (group 5)
+          try {
+            await pool.execute('INSERT INTO user_groups (user_id, group_id) VALUES (?, 5)', [customerId]);
+          } catch (_) {}
+        }
+      } catch (userErr) {
+        console.warn('Customer resolution warning:', userErr.message);
       }
     }
 
+    if (!customerId) {
+      // Last resort: use first user in DB
+      try {
+        const [anyUser] = await pool.execute('SELECT id FROM users ORDER BY id ASC LIMIT 1');
+        customerId = anyUser.length > 0 ? anyUser[0].id : 1;
+      } catch (_) { customerId = 1; }
+    }
+
+    // ── Insert Booking ────────────────────────────────────────────────
     const [bRes] = await pool.execute(
       `INSERT INTO bookings (customer_id, hall_id, hall_slot_id, event_type, event_date, guest_count_estimated, status, created_by)
        VALUES (?, ?, NULL, ?, ?, ?, ?, ?)`,
-      [customerId, hall_id, event_type, event_date, guests, 'inquiry', customerId]
+      [customerId, resolvedHallId, event_type, event_date, guests, 'inquiry', customerId]
     );
 
     const dbBookingId = bRes.insertId;
 
+    // ── Insert Service Line Items (only if valid package data provided) ─
     for (const srv of servicesList) {
+      if (!srv.category_id || !srv.package_id) continue; // skip invalid/vendor-only items
+
       let linePrice = Number(srv.price || 0);
       if (srv.pricing_type === 'per_head') {
         linePrice = Number(srv.price || 0) * guests;
       }
 
-      await pool.execute(
-        `INSERT INTO booking_services (booking_id, category_id, package_id, price, status) VALUES (?, ?, ?, ?, ?)`,
-        [dbBookingId, srv.category_id, srv.package_id, linePrice, 'assigned']
-      );
+      try {
+        await pool.execute(
+          `INSERT INTO booking_services (booking_id, category_id, package_id, price, status) VALUES (?, ?, ?, ?, ?)`,
+          [dbBookingId, srv.category_id, srv.package_id, linePrice, 'assigned']
+        );
+      } catch (srvErr) {
+        console.warn(`Skipping service line item (${srv.category_id}/${srv.package_id}):`, srvErr.message);
+      }
     }
 
     return res.status(201).json({
       success: true,
       bookingId: dbBookingId,
-      message: 'Booking reservation inquiry created successfully'
+      message: 'Booking inquiry submitted successfully'
     });
 
   } catch (error) {
     console.error('Create Booking Error:', error);
-    return res.status(500).json({ success: false, message: error.message || 'Failed to create booking in database' });
+    return res.status(500).json({ success: false, message: error.message || 'Failed to create booking inquiry' });
   }
 };
+
 
 // PUT /api/bookings/:id/status - Update booking status in MySQL
 exports.updateBookingStatus = async (req, res) => {

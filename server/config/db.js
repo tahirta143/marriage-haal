@@ -64,6 +64,11 @@ const initDatabaseAndMigrations = async () => {
       await conn.query(`ALTER TABLE vendors ADD COLUMN reviews INT DEFAULT 50`);
     } catch (mErr) {}
 
+    // Migration: Add gallery column to vendors if missing
+    try {
+      await conn.query(`ALTER TABLE vendors ADD COLUMN gallery JSON NULL`);
+    } catch (mErr) {}
+
     // Migration: Ensure sub_venues table exists
     try {
       await conn.query(`

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import api from '../../../lib/api';
 import { useAuth } from '../../../lib/auth';
 import MarketplaceHeader from '../../../components/MarketplaceHeader';
@@ -130,19 +131,20 @@ export default function VenueClientView({ type }) {
               const amenitiesList = Array.isArray(hall.amenities)
                 ? hall.amenities
                 : typeof hall.amenities === 'string'
-                ? JSON.parse(hall.amenities)
-                : ['AC', 'VIP Parking', 'Sound System'];
+                  ? JSON.parse(hall.amenities)
+                  : ['AC', 'VIP Parking', 'Sound System'];
 
               return (
-                <div
+                <Link
                   key={hall.id}
-                  className="rounded-3xl bg-white border border-[#F0D5E2] overflow-hidden shadow-sm hover:shadow-lg transition-all duration-200 flex flex-col justify-between"
+                  href={`/venues/detail?id=${hall.id}&name=${encodeURIComponent(hall.name)}`}
+                  className="rounded-3xl bg-white border border-[#F0D5E2] overflow-hidden shadow-sm hover:shadow-lg transition-all duration-200 flex flex-col justify-between group cursor-pointer"
                 >
                   <div className="h-48 w-full bg-gray-100 relative overflow-hidden">
                     <img
                       src={hall.image_url || fallbackImg}
                       alt={hall.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute top-3 left-3 px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-[#AA336A] text-white shadow-md">
                       {hall.venue_type || venueTypeName}
@@ -151,7 +153,7 @@ export default function VenueClientView({ type }) {
 
                   <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
                     <div className="space-y-2">
-                      <h3 className="text-lg font-bold text-[#22131A]">{hall.name}</h3>
+                      <h3 className="text-lg font-bold text-[#22131A] group-hover:text-[#AA336A] transition-colors">{hall.name}</h3>
                       <p className="text-xs text-[#705562] font-medium flex items-center gap-1">
                         <MapPin className="w-3.5 h-3.5 text-[#AA336A]" /> {hall.address}
                       </p>
@@ -175,7 +177,11 @@ export default function VenueClientView({ type }) {
 
                     <div className="pt-4 border-t border-[#F0D5E2]">
                       <button
-                        onClick={() => setQuoteModalTarget(hall)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setQuoteModalTarget(hall);
+                        }}
                         className="w-full py-3 rounded-2xl bg-[#AA336A] hover:bg-[#8E2656] text-white font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md shadow-[#AA336A]/20"
                       >
                         <Calendar className="w-4 h-4" />
@@ -183,7 +189,7 @@ export default function VenueClientView({ type }) {
                       </button>
                     </div>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>
