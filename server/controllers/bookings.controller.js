@@ -1,25 +1,37 @@
 const pool = require('../config/db');
 
-// GET /api/bookings - List all bookings from MySQL
+// GET /api/bookings - List all bookings from MySQL with Customer Isolation
 exports.getAllBookings = async (req, res) => {
   try {
     const { status, customer_id } = req.query;
+    const userRole = req.user?.role;
+    const userId = req.user?.id;
 
     let query = `
-      SELECT b.*, u.name as customer_name, u.email as customer_email, u.phone as customer_phone, h.name as hall_name
+      SELECT b.*, 
+             COALESCE(u.name, 'Guest Customer') as customer_name, 
+             COALESCE(u.email, 'guest@shaadipro.com') as customer_email, 
+             COALESCE(u.phone, 'N/A') as customer_phone, 
+             COALESCE(h.name, 'ShaadiPro Main Hall') as hall_name
       FROM bookings b
-      JOIN users u ON b.customer_id = u.id
-      JOIN halls h ON b.hall_id = h.id
+      LEFT JOIN users u ON b.customer_id = u.id
+      LEFT JOIN halls h ON b.hall_id = h.id
       WHERE 1=1
     `;
     const params = [];
+
+    // Strict customer isolation: customers only see their own bookings
+    if (userRole === 'customer') {
+      query += ' AND b.customer_id = ?';
+      params.push(userId);
+    } else if (customer_id) {
+      query += ' AND b.customer_id = ?';
+      params.push(customer_id);
+    }
+
     if (status && status !== 'all') {
       query += ' AND b.status = ?';
       params.push(status);
-    }
-    if (customer_id) {
-      query += ' AND b.customer_id = ?';
-      params.push(customer_id);
     }
     query += ' ORDER BY b.id DESC';
 
@@ -36,10 +48,14 @@ exports.getBookingById = async (req, res) => {
     const { id } = req.params;
 
     const [bRows] = await pool.execute(`
-      SELECT b.*, u.name as customer_name, u.email as customer_email, u.phone as customer_phone, h.name as hall_name
+      SELECT b.*, 
+             COALESCE(u.name, 'Guest Customer') as customer_name, 
+             COALESCE(u.email, 'guest@shaadipro.com') as customer_email, 
+             COALESCE(u.phone, 'N/A') as customer_phone, 
+             COALESCE(h.name, 'ShaadiPro Main Hall') as hall_name
       FROM bookings b
-      JOIN users u ON b.customer_id = u.id
-      JOIN halls h ON b.hall_id = h.id
+      LEFT JOIN users u ON b.customer_id = u.id
+      LEFT JOIN halls h ON b.hall_id = h.id
       WHERE b.id = ?
     `, [id]);
 
@@ -49,15 +65,24 @@ exports.getBookingById = async (req, res) => {
 
     const booking = bRows[0];
     const [services] = await pool.execute(`
-      SELECT bs.*, c.name as category_name, c.pricing_type, cp.name as package_name
+      SELECT bs.*, 
+             COALESCE(c.name, 'Custom Service') as category_name, 
+             COALESCE(c.pricing_type, 'flat') as pricing_type, 
+             COALESCE(cp.name, 'Standard Package') as package_name
       FROM booking_services bs
-      JOIN categories c ON bs.category_id = c.id
-      JOIN category_packages cp ON bs.package_id = cp.id
+      LEFT JOIN categories c ON bs.category_id = c.id
+      LEFT JOIN category_packages cp ON bs.package_id = cp.id
       WHERE bs.booking_id = ?
     `, [id]);
 
     booking.services = services;
-    booking.total_amount = services.reduce((sum, s) => sum + Number(s.price), 0);
+    const computedTotal = services.reduce((sum, s) => sum + Number(s.price), 0);
+    booking.total_amount = Number(booking.total_amount) || computedTotal;
+
+    // Keep DB updated if total_amount was NULL
+    if (!bRows[0].total_amount && computedTotal > 0) {
+      await pool.execute('UPDATE bookings SET total_amount = ? WHERE id = ?', [computedTotal, id]);
+    }
 
     return res.status(200).json({ success: true, booking });
   } catch (error) {
@@ -65,8 +90,9 @@ exports.getBookingById = async (req, res) => {
   }
 };
 
-// POST /api/bookings - Create new booking inquiry in MySQL
+// POST /api/bookings - Create new booking inquiry in MySQL with Transaction & Double-Booking Check
 exports.createBooking = async (req, res) => {
+  let connection;
   try {
     const {
       customer_name,
@@ -88,7 +114,6 @@ exports.createBooking = async (req, res) => {
     const servicesList = Array.isArray(selected_services) ? selected_services : [];
 
     // ── Resolve Hall ──────────────────────────────────────────────────
-    // Try the requested hall_id first; if it doesn't exist, fall back to first available hall
     let resolvedHallId = parseInt(hall_id) || 1;
     try {
       const [hallCheck] = await pool.execute('SELECT id FROM halls WHERE id = ? LIMIT 1', [resolvedHallId]);
@@ -97,7 +122,6 @@ exports.createBooking = async (req, res) => {
         if (firstHall.length > 0) {
           resolvedHallId = firstHall[0].id;
         } else {
-          // No halls in DB at all — create a placeholder
           const [hallRes] = await pool.execute(
             "INSERT INTO halls (name, city, venue_type, capacity_min, capacity_max, status) VALUES (?, 'Lahore', 'Ballroom', 100, 1000, 'active')",
             ['ShaadiPro Main Hall']
@@ -109,6 +133,18 @@ exports.createBooking = async (req, res) => {
       console.warn('Hall resolution warning:', hallErr.message);
     }
 
+    // ── Double-Booking Slot Conflict Check ──────────────────────────────
+    const [conflictCheck] = await pool.execute(
+      "SELECT id FROM bookings WHERE hall_id = ? AND event_date = ? AND status IN ('confirmed', 'tentative') LIMIT 1",
+      [resolvedHallId, event_date]
+    );
+    if (conflictCheck.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: `Slot conflict: The selected venue is already reserved on ${event_date}. Please select another date.`
+      });
+    }
+
     // ── Resolve Customer ──────────────────────────────────────────────
     let customerId = req.user?.id || null;
 
@@ -118,7 +154,6 @@ exports.createBooking = async (req, res) => {
         if (uRows.length > 0) {
           customerId = uRows[0].id;
         } else {
-          // Guest inquiry: create a lightweight user record
           const guestName = customer_name || 'Guest Inquiry';
           const guestEmail = customer_email;
           const guestPhone = customer_phone || null;
@@ -129,7 +164,6 @@ exports.createBooking = async (req, res) => {
             [guestName, guestEmail, guestPhone, guestHash, 'active']
           );
           customerId = newUser.insertId;
-          // Assign to Customer group (group 5)
           try {
             await pool.execute('INSERT INTO user_groups (user_id, group_id) VALUES (?, 5)', [customerId]);
           } catch (_) {}
@@ -140,55 +174,79 @@ exports.createBooking = async (req, res) => {
     }
 
     if (!customerId) {
-      // Last resort: use first user in DB
       try {
         const [anyUser] = await pool.execute('SELECT id FROM users ORDER BY id ASC LIMIT 1');
         customerId = anyUser.length > 0 ? anyUser[0].id : 1;
       } catch (_) { customerId = 1; }
     }
 
-    // ── Insert Booking ────────────────────────────────────────────────
-    const [bRes] = await pool.execute(
-      `INSERT INTO bookings (customer_id, hall_id, hall_slot_id, event_type, event_date, guest_count_estimated, status, created_by)
-       VALUES (?, ?, NULL, ?, ?, ?, ?, ?)`,
+    // ── Begin Transaction ─────────────────────────────────────────────
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    const [bRes] = await connection.execute(
+      `INSERT INTO bookings (customer_id, hall_id, hall_slot_id, event_type, event_date, guest_count_estimated, status, created_by, total_amount)
+       VALUES (?, ?, NULL, ?, ?, ?, ?, ?, 0)`,
       [customerId, resolvedHallId, event_type, event_date, guests, 'inquiry', customerId]
     );
 
     const dbBookingId = bRes.insertId;
+    let lineItemSum = 0;
 
-    // ── Insert Service Line Items (only if valid package data provided) ─
+    // ── Insert Service Line Items ─────────────────────────────────────
     for (const srv of servicesList) {
-      if (!srv.category_id || !srv.package_id) continue; // skip invalid/vendor-only items
+      if (!srv.category_id || !srv.package_id) continue;
 
       let linePrice = Number(srv.price || 0);
       if (srv.pricing_type === 'per_head') {
         linePrice = Number(srv.price || 0) * guests;
       }
 
-      try {
-        await pool.execute(
-          `INSERT INTO booking_services (booking_id, category_id, package_id, price, status) VALUES (?, ?, ?, ?, ?)`,
-          [dbBookingId, srv.category_id, srv.package_id, linePrice, 'assigned']
-        );
-      } catch (srvErr) {
-        console.warn(`Skipping service line item (${srv.category_id}/${srv.package_id}):`, srvErr.message);
-      }
+      lineItemSum += linePrice;
+
+      await connection.execute(
+        `INSERT INTO booking_services (booking_id, category_id, package_id, price, status) VALUES (?, ?, ?, ?, ?)`,
+        [dbBookingId, srv.category_id, srv.package_id, linePrice, 'assigned']
+      );
     }
+
+    const calculatedTotal = lineItemSum > 0 ? lineItemSum : Number(req.body.total_amount || 0);
+
+    // ── Update total_amount on bookings row ───────────────────────────
+    await connection.execute(
+      'UPDATE bookings SET total_amount = ? WHERE id = ?',
+      [calculatedTotal, dbBookingId]
+    );
+
+    // ── Create Notification ───────────────────────────────────────────
+    const notifTitle = `🎉 New Booking Inquiry #${dbBookingId}`;
+    const notifMsg = `Customer ${customer_name || 'Guest'} requested a ${event_type || 'Wedding'} booking for ${guests} guests on ${event_date}.`;
+    await connection.execute(
+      `INSERT INTO notifications (user_id, title, message, type, link, is_read) VALUES (NULL, ?, ?, 'booking', '/dashboard/bookings', FALSE)`,
+      [notifTitle, notifMsg]
+    );
+
+    await connection.commit();
+    connection.release();
 
     return res.status(201).json({
       success: true,
       bookingId: dbBookingId,
+      totalAmount: calculatedTotal,
       message: 'Booking inquiry submitted successfully'
     });
 
   } catch (error) {
+    if (connection) {
+      await connection.rollback();
+      connection.release();
+    }
     console.error('Create Booking Error:', error);
     return res.status(500).json({ success: false, message: error.message || 'Failed to create booking inquiry' });
   }
 };
 
-
-// PUT /api/bookings/:id/status - Update booking status in MySQL
+// PUT /api/bookings/:id/status - Update booking status in MySQL with 404 Check
 exports.updateBookingStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -197,6 +255,11 @@ exports.updateBookingStatus = async (req, res) => {
     const validStatuses = ['inquiry', 'tentative', 'confirmed', 'completed', 'cancelled'];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ success: false, message: 'Invalid booking status' });
+    }
+
+    const [check] = await pool.execute('SELECT id FROM bookings WHERE id = ?', [id]);
+    if (check.length === 0) {
+      return res.status(404).json({ success: false, message: 'Booking not found' });
     }
 
     await pool.execute('UPDATE bookings SET status = ? WHERE id = ?', [status, id]);

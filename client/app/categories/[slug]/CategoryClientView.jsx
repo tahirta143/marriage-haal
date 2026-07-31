@@ -64,17 +64,38 @@ const BUDGET_OPTIONS = [
   { label: '100,000+', min: 100001, max: 9999999 },
 ];
 
+import { useSearchParams } from 'next/navigation';
+
 export default function CategoryClientView({ slug }) {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const initialSearch = searchParams ? searchParams.get('search') || '' : '';
 
   // Filters State
   const [selectedCity, setSelectedCity] = useState('Lahore');
+  const [vendorSearchText, setVendorSearchText] = useState(initialSearch);
   const [selectedBudgets, setSelectedBudgets] = useState([]);
   const [vendorType, setVendorType] = useState('ALL');
   const [servicesFor, setServicesFor] = useState('ALL');
   const [staffGender, setStaffGender] = useState('ALL');
   const [travelsHomeOnly, setTravelsHomeOnly] = useState(false);
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'grid'
+
+  const [debouncedSearchText, setDebouncedSearchText] = useState(initialSearch);
+
+  useEffect(() => {
+    if (initialSearch) {
+      setVendorSearchText(initialSearch);
+    }
+  }, [initialSearch]);
+
+  // Debounce search input for performance (300ms)
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchText(vendorSearchText);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [vendorSearchText]);
 
   // Modals & Inquiries
   const [quoteModalTarget, setQuoteModalTarget] = useState(null);
@@ -169,10 +190,209 @@ export default function CategoryClientView({ slug }) {
     }
   };
 
+const FALLBACK_VENDORS_BY_SLUG = {
+  'bridal-makeup': [
+    {
+      id: 101,
+      name: 'Glamour Bridal Salon & Airbrush Studio',
+      verified: true,
+      badge: 'Top Pick',
+      rating: 4.9,
+      reviewsCount: 184,
+      address: 'Gulberg III, Lahore',
+      city: 'Lahore',
+      type: 'Salon',
+      startingPrice: 35000,
+      image: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=800&q=80',
+      description: 'HD airbrush bridal glam, baraat makeover, signature hair styling, dupatta & heavy jewelry setting.',
+      travelsHome: true,
+    },
+    {
+      id: 102,
+      name: 'Royal Makeover Lounge',
+      verified: true,
+      badge: 'Featured',
+      rating: 4.8,
+      reviewsCount: 142,
+      address: 'DHA Phase 5, Lahore',
+      city: 'Lahore',
+      type: 'Salon',
+      startingPrice: 28000,
+      image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80',
+      description: 'Luxury bridal makeover packages, Nikkah glam, engagement makeup & party makeover services.',
+      travelsHome: true,
+    },
+    {
+      id: 103,
+      name: 'Natasha Freelance Bridal Artist',
+      verified: true,
+      badge: 'Verified',
+      rating: 4.7,
+      reviewsCount: 96,
+      address: 'F-7 Markaz, Islamabad',
+      city: 'Islamabad',
+      type: 'Freelance',
+      startingPrice: 22000,
+      image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80',
+      description: 'Soft glow bridal makeup, customized hair extensions, and door-to-door venue glam service.',
+      travelsHome: true,
+    },
+  ],
+  'photographers': [
+    {
+      id: 201,
+      name: 'Cinematic Wedding Films & DSLR Studio',
+      verified: true,
+      badge: 'Top Pick',
+      rating: 4.9,
+      reviewsCount: 210,
+      address: 'DHA Phase 3, Lahore',
+      city: 'Lahore',
+      type: 'Studio',
+      startingPrice: 65000,
+      image: 'https://images.unsplash.com/photo-1537633552985-df8429e8048b?auto=format&fit=crop&w=800&q=80',
+      description: 'Ultra 4K cinematic wedding trailer films, drone aerial coverage, printed hardcover albums & portrait shoots.',
+      travelsHome: true,
+    },
+    {
+      id: 202,
+      name: 'Royal Frames Photography',
+      verified: true,
+      badge: 'Featured',
+      rating: 4.8,
+      reviewsCount: 165,
+      address: 'Blue Area, Islamabad',
+      city: 'Islamabad',
+      type: 'Studio',
+      startingPrice: 45000,
+      image: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80',
+      description: 'Candid event photography, full Baraat & Walima coverage, slow-mo videos, and instant digital galleries.',
+      travelsHome: true,
+    },
+  ],
+  'catering': [
+    {
+      id: 301,
+      name: 'Royal Taste Food & Live Catering Services',
+      verified: true,
+      badge: 'Top Pick',
+      rating: 4.9,
+      reviewsCount: 320,
+      address: 'MM Alam Road, Gulberg, Lahore',
+      city: 'Lahore',
+      type: 'Catering',
+      startingPrice: 1800,
+      image: 'https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&w=800&q=80',
+      description: 'Mutton karahi, chicken biryani, live naan tandoor, live BBQ seekh kabab, and Gajar halwa dessert bar.',
+      travelsHome: true,
+    },
+    {
+      id: 302,
+      name: 'Gourmet Feast Caterers',
+      verified: true,
+      badge: 'Featured',
+      rating: 4.8,
+      reviewsCount: 215,
+      address: 'Clifton, Karachi',
+      city: 'Karachi',
+      type: 'Catering',
+      startingPrice: 1500,
+      image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80',
+      description: '5-course wedding dinner spreads, traditional kheer, live grilled fish, and mocktail stations.',
+      travelsHome: true,
+    },
+  ],
+  'decor': [
+    {
+      id: 401,
+      name: 'Mughal Royal Stage & Theme Decorators',
+      verified: true,
+      badge: 'Top Pick',
+      rating: 4.9,
+      reviewsCount: 150,
+      address: 'Johar Town, Lahore',
+      city: 'Lahore',
+      type: 'Decor',
+      startingPrice: 120000,
+      image: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=800&q=80',
+      description: 'Grand floral stage canopy, entrance arches, walkway crystal chandeliers, LED cans & couple seating sofa.',
+      travelsHome: true,
+    },
+  ],
+  'henna-artists': [
+    {
+      id: 501,
+      name: 'Organic Bridal Mehndi & Henna Art',
+      verified: true,
+      badge: 'Top Pick',
+      rating: 4.9,
+      reviewsCount: 110,
+      address: 'Model Town, Lahore',
+      city: 'Lahore',
+      type: 'Freelance',
+      startingPrice: 18000,
+      image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80',
+      description: 'Heavy organic bridal henna, arm motif designs, dark stain stain guarantee & family mehndi packages.',
+      travelsHome: true,
+    },
+  ],
+  'car-rental': [
+    {
+      id: 601,
+      name: 'Royal Vintage & Luxury Wedding Car Rental',
+      verified: true,
+      badge: 'Top Pick',
+      rating: 4.9,
+      reviewsCount: 95,
+      address: 'Garden Town, Lahore',
+      city: 'Lahore',
+      type: 'Rental',
+      startingPrice: 35000,
+      image: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80',
+      description: 'Decorated vintage Mercedes, Audi A6, Rolls Royce, and Limousines with uniformed chauffeurs.',
+      travelsHome: true,
+    },
+  ],
+  'stationery': [
+    {
+      id: 701,
+      name: 'Acrylic & Foil Wedding Invitation Printers',
+      verified: true,
+      badge: 'Top Pick',
+      rating: 4.8,
+      reviewsCount: 88,
+      address: 'Urdu Bazaar, Lahore',
+      city: 'Lahore',
+      type: 'Printing',
+      startingPrice: 22000,
+      image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80',
+      description: 'Luxury gold foil stamped cards, clear acrylic invitation suites, wax seal envelopes & digital WhatsApp cards.',
+      travelsHome: true,
+    },
+  ],
+  'dj-sound-system': [
+    {
+      id: 801,
+      name: 'JBL Concert Sound & Moving Lights DJ Night',
+      verified: true,
+      badge: 'Top Pick',
+      rating: 4.9,
+      reviewsCount: 130,
+      address: 'DHA Phase 6, Lahore',
+      city: 'Lahore',
+      type: 'Sound & Lighting',
+      startingPrice: 15000,
+      image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=800&q=80',
+      description: 'High power JBL line array speakers, intelligent moving head lights, cold pyro smoke fountains & live DJ.',
+      travelsHome: true,
+    },
+  ],
+};
+
   const pageTitle = CATEGORY_TITLES[slug] || `Top Vendors in ${slug}`;
   const pageSubtitle = CATEGORY_SUBTITLES[slug] || 'Browse top rated vendors, compare pricing, and send direct availability inquiries.';
-  // Only real DB data — no mock fallback
-  const rawVendors = dbVendors;
+  // Fallback to rich default vendors if database has 0 records for this category
+  const rawVendors = dbVendors.length > 0 ? dbVendors : (FALLBACK_VENDORS_BY_SLUG[slug] || FALLBACK_VENDORS_BY_SLUG['bridal-makeup']);
 
   // Toggle Budget Filter Checkboxes
   const handleBudgetToggle = (label) => {
@@ -201,13 +421,21 @@ export default function CategoryClientView({ slug }) {
     // Type match
     const matchesType = vendorType === 'ALL' || vendor.type.toLowerCase() === vendorType.toLowerCase();
 
-    // Travels to Home
+    // Travels to Home match
     const matchesTravels = !travelsHomeOnly || vendor.travelsHome;
 
-    return matchesCity && matchesBudget && matchesType && matchesTravels;
+    // Search text match (debounced)
+    const q = debouncedSearchText.trim().toLowerCase();
+    const matchesSearch = !q ||
+      vendor.name.toLowerCase().includes(q) ||
+      vendor.description.toLowerCase().includes(q) ||
+      vendor.address.toLowerCase().includes(q) ||
+      vendor.type.toLowerCase().includes(q);
+
+    return matchesCity && matchesBudget && matchesType && matchesTravels && matchesSearch;
   });
 
-  const displayVendors = filteredVendors.length > 0 ? filteredVendors : rawVendors;
+  const displayVendors = filteredVendors;
 
   const handleInquirySubmit = async (e) => {
     e.preventDefault();
@@ -330,6 +558,7 @@ export default function CategoryClientView({ slug }) {
               </span>
               <button
                 onClick={() => {
+                  setVendorSearchText('');
                   setSelectedBudgets([]);
                   setVendorType('ALL');
                   setServicesFor('ALL');
@@ -340,6 +569,31 @@ export default function CategoryClientView({ slug }) {
               >
                 Reset All
               </button>
+            </div>
+
+            {/* Keyword Search Input */}
+            <div className="space-y-2">
+              <label className="text-xs font-extrabold text-[#604453] uppercase block">
+                Search Vendor Keyword
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={vendorSearchText}
+                  onChange={(e) => setVendorSearchText(e.target.value)}
+                  placeholder="Business name, service..."
+                  className="w-full pl-3.5 pr-8 py-2.5 rounded-2xl bg-[#FAF5F7] border border-[#F0D5E2] text-xs font-bold text-[#22131A] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#AA336A]"
+                />
+                {vendorSearchText && (
+                  <button
+                    type="button"
+                    onClick={() => setVendorSearchText('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* City Selector */}

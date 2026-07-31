@@ -1,8 +1,9 @@
 const pool = require('../config/db');
 
-// GET /api/jobs/my-jobs - Get tasks assigned to current logged-in user from MySQL
+// GET /api/jobs/my-jobs - Get tasks assigned to current logged-in user with strict tenant filtering
 exports.getMyJobs = async (req, res) => {
   try {
+    const userId = req.user?.id;
     const userRole = req.user?.role;
 
     let query = `
@@ -17,16 +18,20 @@ exports.getMyJobs = async (req, res) => {
       JOIN category_packages cp ON bs.package_id = cp.id
       WHERE 1=1
     `;
+    const params = [];
 
+    // Strict multi-tenant isolation: filter strictly by logged in user ID
     if (userRole === 'vendor') {
-      query += ' AND bs.vendor_id IS NOT NULL';
+      query += ' AND bs.vendor_id = ?';
+      params.push(userId);
     } else if (userRole === 'staff') {
-      query += ' AND bs.staff_id IS NOT NULL';
+      query += ' AND bs.staff_id = ?';
+      params.push(userId);
     }
 
     query += ' ORDER BY b.event_date ASC';
 
-    const [rows] = await pool.execute(query);
+    const [rows] = await pool.execute(query, params);
     return res.status(200).json({ success: true, count: rows.length, tasks: rows });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Failed to fetch task assignments from database', error: error.message });
@@ -60,7 +65,7 @@ exports.assignTask = async (req, res) => {
     if (vendor_id) {
       await pool.execute('UPDATE booking_services SET vendor_id = ?, staff_id = NULL WHERE id = ?', [vendor_id, serviceId]);
     } else if (staff_id) {
-      await pool.execute('UPDATE booking_services SET staff_id = ?, vendor_id = NULL WHERE id = ?', [staff_id, serviceId]);
+      await pool.execute('UPDATE booking_services SET staff_id = ?, vendor_id = NULL WHERE id = ?', [serviceId]);
     }
     return res.status(200).json({ success: true, message: 'Line item assigned successfully' });
   } catch (error) {

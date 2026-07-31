@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import CategoryClientView from './CategoryClientView';
 
 export async function generateStaticParams() {
@@ -14,5 +15,13 @@ export async function generateStaticParams() {
 }
 
 export default function CategoryPage({ params }) {
-  return <CategoryClientView slug={params.slug} />;
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#FDFBFB] flex items-center justify-center text-xs font-semibold text-[#705562]">
+        Loading vendors...
+      </div>
+    }>
+      <CategoryClientView slug={params.slug} />
+    </Suspense>
+  );
 }

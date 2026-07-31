@@ -17,6 +17,7 @@ const reportsRoutes = require('./routes/reports.routes');
 const usersRoutes = require('./routes/users.routes');
 const uploadRoutes = require('./routes/upload.routes');
 const eventsRoutes = require('./routes/events.routes');
+const notificationsRoutes = require('./routes/notifications.routes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -47,6 +48,7 @@ app.use('/api/reports', reportsRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/events', eventsRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 // Health Check
 app.get('/api/health', (req, res) => {

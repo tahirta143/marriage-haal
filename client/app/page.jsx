@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Link from 'next/link';
 import MarketplaceHeader from '../components/MarketplaceHeader';
 import {
@@ -24,7 +24,41 @@ import {
   Gem,
   Award,
   ShieldCheck,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Film,
+  CheckCircle2,
+  Star,
 } from 'lucide-react';
+
+const HERO_VIDEOS = [
+  {
+    id: 'wedding',
+    title: 'ShaadiPro Featured Film',
+    label: '🎥 Featured Video',
+    url: '/video.mp4',
+    poster: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1600&q=80',
+    tagline: 'ShaadiPro Luxury Wedding & Catering Coverage',
+  },
+  {
+    id: 'catering',
+    title: 'Gourmet Catering Feast',
+    label: '🍲 Live Catering',
+    url: '/video.mp4',
+    poster: 'https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&w=800&q=80',
+    tagline: 'Mutton Karahi, Biryani & Live Tandoor',
+  },
+  {
+    id: 'decor',
+    title: 'Royal Stage & Marquee Decor',
+    label: '✨ Stage & Lighting',
+    url: '/video.mp4',
+    poster: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=800&q=80',
+    tagline: 'Mughal Canopy & Ambient Lighting',
+  },
+];
 
 const VENDOR_MODULES = [
   {
@@ -201,72 +235,139 @@ const EVENT_MODULES = [
 export default function ModularHomePage() {
   const [selectedCity, setSelectedCity] = useState('Lahore');
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeVideo, setActiveVideo] = useState(HERO_VIDEOS[0]);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [isMuted, setIsMuted] = useState(true);
+  const videoRef = useRef(null);
+
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  const handleSelectVideo = (video) => {
+    setActiveVideo(video);
+    setIsPlaying(true);
+    if (videoRef.current) {
+      videoRef.current.src = video.url;
+      videoRef.current.play().catch(() => {});
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#FAF7F9] text-[#111827]">
       {/* Marketplace Header */}
       <MarketplaceHeader selectedCity={selectedCity} onSelectCity={setSelectedCity} />
 
-      {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-[#22131A] via-[#3B1C2B] to-[#541E38] text-white py-16 px-4 sm:px-6 lg:px-8">
-        <div className="absolute top-0 right-0 -mt-16 -mr-16 w-96 h-96 bg-[#AA336A]/25 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/4 -mb-16 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+      {/* Hero Section with Bright HD Background Video & Solid Colors (NO GRADIENTS) */}
+      <div className="relative overflow-hidden min-h-[560px] lg:min-h-[640px] flex items-center justify-center text-white py-16 px-4 sm:px-6 lg:px-8 bg-[#22131A]">
+        
+        {/* Background Video Layer */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <video
+            ref={videoRef}
+            src={activeVideo.url}
+            poster={activeVideo.poster}
+            autoPlay
+            loop
+            muted={isMuted}
+            playsInline
+            className="w-full h-full object-cover brightness-105 contrast-105"
+          />
 
-        <div className="max-w-5xl mx-auto space-y-6 text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[#F4C0D5] text-xs font-bold uppercase tracking-widest shadow-sm">
-            <Sparkles className="w-4 h-4 text-amber-300" />
-            Pakistan's Premier Modular Wedding Marketplace
+          {/* Reduced Dark Overlay for Vivid & Clear Video Visibility */}
+          <div className="absolute inset-0 bg-black/30" />
+        </div>
+
+        {/* Floating Top Control Toolbar (Audio & Video Status) */}
+        <div className="absolute top-6 right-6 z-20 flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#22131A]/80 backdrop-blur-md border border-white/20 text-xs font-semibold text-white">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-[11px] uppercase tracking-wider">{activeVideo.tagline}</span>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-extrabold font-serif-title tracking-tight leading-tight">
+          <button
+            onClick={toggleMute}
+            className="p-2.5 rounded-full bg-[#22131A]/80 hover:bg-[#AA336A] border border-white/20 text-white transition-all shadow-md hover:scale-105"
+            title={isMuted ? 'Unmute Audio' : 'Mute Audio'}
+          >
+            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-amber-300" />}
+          </button>
+
+          <button
+            onClick={togglePlay}
+            className="p-2.5 rounded-full bg-[#22131A]/80 hover:bg-[#AA336A] border border-white/20 text-white transition-all shadow-md hover:scale-105"
+            title={isPlaying ? 'Pause Video' : 'Play Video'}
+          >
+            {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 text-amber-300 fill-amber-300" />}
+          </button>
+        </div>
+
+        {/* Main Hero Content */}
+        <div className="max-w-5xl mx-auto space-y-8 text-center relative z-10 my-auto">
+          
+          {/* Solid Top Badge */}
+          <div className="inline-flex items-center gap-2.5 px-5 py-2 rounded-full bg-[#22131A]/80 backdrop-blur-md border border-white/20 text-white shadow-lg">
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <span className="text-xs font-extrabold uppercase tracking-widest text-[#F4C0D5]">
+              Pakistan's Premier Modular Wedding & Catering Marketplace
+            </span>
+          </div>
+
+          {/* Main Title with Solid Text Colors (NO GRADIENT) */}
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold font-serif-title tracking-tight leading-[1.15] text-white drop-shadow-lg">
             Book Top Wedding Vendors & Venues in{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F4C0D5] via-amber-200 to-white">
+            <span className="text-[#F4C0D5]">
               {selectedCity}
             </span>
           </h1>
 
-          <p className="text-gray-200 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
-            Select a service or venue module below to explore specialized vendors, photos, transparent pricing, and direct availability check.
+          <p className="text-white text-sm sm:text-base lg:text-lg max-w-2xl mx-auto leading-relaxed font-medium drop-shadow-md">
+            Explore verified photographers, bridal makeup artists, royal marquees, and live mutton karahi & BBQ catering spreads with instant availability check.
           </p>
 
-          {/* Quick Search Widget */}
-          <div className="p-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl max-w-2xl mx-auto flex items-center gap-2 shadow-xl">
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search makeup artists, photographers, marquees, catering..."
-                className="w-full pl-10 pr-4 py-3 rounded-2xl bg-white/10 border border-white/20 text-white placeholder-gray-300 text-xs focus:outline-none focus:ring-2 focus:ring-[#AA336A]"
-              />
-            </div>
+          <div className="pt-2">
             <Link
               href="/categories"
-              className="px-6 py-3 rounded-2xl bg-[#AA336A] hover:bg-[#8E2656] text-white font-extrabold text-xs uppercase tracking-wider flex items-center gap-2 transition-all flex-shrink-0"
+              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-[#AA336A] hover:bg-[#8E2656] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg hover:scale-105 transition-all"
             >
-              <span>Browse All</span>
+              <span>Explore Marketplace</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
+
         </div>
       </div>
 
       {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 space-y-20">
+        
         {/* MODULE SECTION 1: Vendor Service Modules */}
-        <div id="categories" className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[#F0D5E2] pb-4">
+        <div id="categories" className="space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[#F0D5E2] pb-5">
             <div>
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#AA336A] uppercase tracking-wider">
-                <Grid className="w-4 h-4" />
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#AA336A]/10 border border-[#AA336A]/20 text-xs font-bold text-[#AA336A] uppercase tracking-wider mb-2">
+                <Grid className="w-3.5 h-3.5" />
                 Vendor Service Modules
               </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold font-serif-title text-[#22131A]">
+              <h2 className="text-3xl sm:text-4xl font-extrabold font-serif-title text-[#22131A]">
                 Explore Services by Category
               </h2>
             </div>
-            <p className="text-xs text-[#705562] max-w-md">
+            <p className="text-xs sm:text-sm text-[#705562] max-w-md leading-relaxed">
               Click any service module card below to view specialized vendors, package rates, photo galleries, and contact details.
             </p>
           </div>
@@ -282,17 +383,17 @@ export default function ModularHomePage() {
                 <Link
                   key={mod.slug}
                   href={`/categories/${mod.slug}`}
-                  className="group relative rounded-3xl bg-white border border-[#F0D5E2] overflow-hidden shadow-sm hover:shadow-xl hover:border-[#AA336A]/50 transition-all duration-300 flex flex-col justify-between"
+                  className="group relative rounded-3xl bg-white border border-[#F0D5E2] overflow-hidden shadow-sm hover:shadow-xl hover:border-[#AA336A] transition-all duration-300 flex flex-col justify-between"
                 >
-                  <div className="h-44 w-full bg-gray-100 relative overflow-hidden">
+                  <div className="h-48 w-full bg-gray-100 relative overflow-hidden">
                     <img
                       src={mod.image}
                       alt={mod.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+                    <div className="absolute inset-0 bg-black/40" />
                     
-                    <div className="absolute top-3 left-3 px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-white/90 text-[#22131A] shadow-sm flex items-center gap-1.5">
+                    <div className="absolute top-3 left-3 px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-white text-[#22131A] shadow-md flex items-center gap-1.5">
                       <Icon className="w-3.5 h-3.5 text-[#AA336A]" />
                       {mod.count}
                     </div>
@@ -307,7 +408,7 @@ export default function ModularHomePage() {
                     </div>
                   </div>
 
-                  <div className="p-5 bg-white space-y-3 flex-1 flex flex-col justify-between">
+                  <div className="p-5 bg-white space-y-4 flex-1 flex flex-col justify-between">
                     <p className="text-xs text-[#705562] font-medium leading-relaxed">
                       {mod.desc}
                     </p>
@@ -324,23 +425,23 @@ export default function ModularHomePage() {
         </div>
 
         {/* MODULE SECTION 2: Venue Property Modules */}
-        <div id="venues" className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[#F0D5E2] pb-4">
+        <div id="venues" className="space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[#F0D5E2] pb-5">
             <div>
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#AA336A] uppercase tracking-wider">
-                <Building2 className="w-4 h-4" />
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#AA336A]/10 border border-[#AA336A]/20 text-xs font-bold text-[#AA336A] uppercase tracking-wider mb-2">
+                <Building2 className="w-3.5 h-3.5" />
                 Venue Property Modules
               </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold font-serif-title text-[#22131A]">
+              <h2 className="text-3xl sm:text-4xl font-extrabold font-serif-title text-[#22131A]">
                 Wedding Halls, Marquees & Lawns in {selectedCity}
               </h2>
             </div>
             <Link
               href="/venues"
-              className="text-xs font-bold text-[#AA336A] hover:underline flex items-center gap-1"
+              className="text-xs font-extrabold text-[#AA336A] hover:underline flex items-center gap-1.5 group"
             >
               <span>View All Venues</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
 
@@ -349,17 +450,17 @@ export default function ModularHomePage() {
               <Link
                 key={vMod.type}
                 href={`/venues/${vMod.type}`}
-                className="group relative rounded-3xl bg-white border border-[#F0D5E2] overflow-hidden shadow-sm hover:shadow-xl hover:border-[#AA336A]/50 transition-all duration-300 flex flex-col justify-between"
+                className="group relative rounded-3xl bg-white border border-[#F0D5E2] overflow-hidden shadow-sm hover:shadow-xl hover:border-[#AA336A] transition-all duration-300 flex flex-col justify-between"
               >
-                <div className="h-48 w-full bg-gray-100 relative overflow-hidden">
+                <div className="h-52 w-full bg-gray-100 relative overflow-hidden">
                   <img
                     src={vMod.image}
                     alt={vMod.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+                  <div className="absolute inset-0 bg-black/40" />
                   
-                  <div className="absolute top-3 left-3 px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-[#AA336A] text-white shadow-md">
+                  <div className="absolute top-3 left-3 px-3 py-1.5 rounded-full text-[10px] font-extrabold uppercase bg-[#AA336A] text-white shadow-md">
                     {vMod.capacity}
                   </div>
 
@@ -370,7 +471,7 @@ export default function ModularHomePage() {
                   </div>
                 </div>
 
-                <div className="p-5 bg-white space-y-3 flex-1 flex flex-col justify-between">
+                <div className="p-5 bg-white space-y-4 flex-1 flex flex-col justify-between">
                   <p className="text-xs text-[#705562] font-medium leading-relaxed">
                     {vMod.desc}
                   </p>
@@ -386,14 +487,14 @@ export default function ModularHomePage() {
         </div>
 
         {/* MODULE SECTION 3: Event Function Modules */}
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[#F0D5E2] pb-4">
+        <div className="space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[#F0D5E2] pb-5">
             <div>
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#AA336A] uppercase tracking-wider">
-                <Calendar className="w-4 h-4" />
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#AA336A]/10 border border-[#AA336A]/20 text-xs font-bold text-[#AA336A] uppercase tracking-wider mb-2">
+                <Calendar className="w-3.5 h-3.5" />
                 Event Function Modules
               </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold font-serif-title text-[#22131A]">
+              <h2 className="text-3xl sm:text-4xl font-extrabold font-serif-title text-[#22131A]">
                 Curated Packages by Event Type
               </h2>
             </div>
@@ -406,17 +507,17 @@ export default function ModularHomePage() {
                 <Link
                   key={eMod.slug}
                   href={`/events/${eMod.slug}`}
-                  className="group relative rounded-3xl bg-white border border-[#F0D5E2] overflow-hidden shadow-sm hover:shadow-xl hover:border-[#AA336A]/50 transition-all duration-300 flex flex-col justify-between"
+                  className="group relative rounded-3xl bg-white border border-[#F0D5E2] overflow-hidden shadow-sm hover:shadow-xl hover:border-[#AA336A] transition-all duration-300 flex flex-col justify-between"
                 >
-                  <div className="h-44 w-full bg-gray-100 relative overflow-hidden">
+                  <div className="h-48 w-full bg-gray-100 relative overflow-hidden">
                     <img
                       src={eMod.image}
                       alt={eMod.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+                    <div className="absolute inset-0 bg-black/40" />
                     
-                    <div className="absolute top-3 left-3 p-2 rounded-full bg-white/90 text-[#AA336A] shadow-md">
+                    <div className="absolute top-3 left-3 p-2 rounded-full bg-[#AA336A] text-white shadow-md">
                       <Icon className="w-4 h-4" />
                     </div>
 
@@ -427,7 +528,7 @@ export default function ModularHomePage() {
                     </div>
                   </div>
 
-                  <div className="p-5 bg-white space-y-3 flex-1 flex flex-col justify-between">
+                  <div className="p-5 bg-white space-y-4 flex-1 flex flex-col justify-between">
                     <p className="text-xs text-[#705562] font-medium leading-relaxed">
                       {eMod.desc}
                     </p>
@@ -443,17 +544,30 @@ export default function ModularHomePage() {
           </div>
         </div>
 
-        {/* Quality Assurance Banner */}
-        <div className="rounded-3xl bg-[#FAF5F7] border border-[#F0D5E2] p-8 sm:p-10 text-center space-y-4 shadow-sm">
-          <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-[#AA336A]/10 text-[#AA336A]">
-            <ShieldCheck className="w-8 h-8" />
+        {/* Quality Assurance Banner with Solid Color (NO GRADIENT) */}
+        <div className="relative overflow-hidden rounded-3xl bg-[#22131A] text-white p-8 sm:p-12 text-center space-y-6 shadow-xl border border-[#3D0F24]">
+          <div className="inline-flex items-center justify-center p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-amber-300 shadow-lg relative z-10">
+            <ShieldCheck className="w-10 h-10" />
           </div>
-          <h3 className="text-2xl font-bold font-serif-title text-[#22131A]">
-            Direct Vendor Contact & Transparent Quotes
-          </h3>
-          <p className="text-xs sm:text-sm text-[#705562] max-w-2xl mx-auto leading-relaxed">
-            Clicking any service module allows you to view specialized vendors, compare per-head & flat package rates, view real photo galleries, and send direct availability quote requests instantly with phone/OTP verification.
-          </p>
+
+          <div className="space-y-3 relative z-10 max-w-2xl mx-auto">
+            <h3 className="text-2xl sm:text-3xl font-extrabold font-serif-title text-[#F4C0D5]">
+              Direct Vendor Contact & Transparent Quotes
+            </h3>
+            <p className="text-xs sm:text-sm text-gray-200 leading-relaxed font-medium">
+              Clicking any service module allows you to view specialized vendors, compare per-head & flat package rates, view real photo galleries, and send direct availability quote requests instantly with phone verification.
+            </p>
+          </div>
+
+          <div className="pt-2 relative z-10">
+            <Link
+              href="/categories"
+              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-[#AA336A] hover:bg-[#8E2656] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg transition-all"
+            >
+              <span>Explore All Modules</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
       </main>
     </div>

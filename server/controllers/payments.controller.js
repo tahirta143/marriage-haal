@@ -36,7 +36,7 @@ exports.getAllPayments = async (req, res) => {
   }
 };
 
-// GET /api/payments/booking/:bookingId - Payment history & balance from MySQL
+// GET /api/payments/booking/:bookingId - Payment history & accurate balance calculation
 exports.getPaymentsByBookingId = async (req, res) => {
   try {
     const { bookingId } = req.params;
@@ -44,7 +44,21 @@ exports.getPaymentsByBookingId = async (req, res) => {
     const [pRows] = await pool.execute('SELECT * FROM payments WHERE booking_id = ? ORDER BY id ASC', [bookingId]);
     const [bRows] = await pool.execute('SELECT * FROM bookings WHERE id = ?', [bookingId]);
 
-    const bookingTotal = bRows.length > 0 ? Number(bRows[0].total_amount || 0) : 0;
+    if (bRows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Booking not found' });
+    }
+
+    let bookingTotal = Number(bRows[0].total_amount || 0);
+
+    // Fallback calculation from service line items if total_amount was NULL
+    if (bookingTotal === 0) {
+      const [sRows] = await pool.execute('SELECT price FROM booking_services WHERE booking_id = ?', [bookingId]);
+      bookingTotal = sRows.reduce((sum, s) => sum + Number(s.price || 0), 0);
+      if (bookingTotal > 0) {
+        await pool.execute('UPDATE bookings SET total_amount = ? WHERE id = ?', [bookingTotal, bookingId]);
+      }
+    }
+
     const totalPaid = pRows.reduce((sum, p) => sum + Number(p.amount), 0);
     const remainingBalance = Math.max(0, bookingTotal - totalPaid);
 
@@ -61,7 +75,7 @@ exports.getPaymentsByBookingId = async (req, res) => {
   }
 };
 
-// POST /api/payments - Record new payment in MySQL
+// POST /api/payments - Record new payment in MySQL with 404 Check & Validation
 exports.recordPayment = async (req, res) => {
   try {
     const { booking_id, amount, type, method } = req.body;
@@ -75,6 +89,11 @@ exports.recordPayment = async (req, res) => {
 
     if (!validTypes.includes(type) || !validMethods.includes(method)) {
       return res.status(400).json({ success: false, message: 'Invalid payment type or method' });
+    }
+
+    const [bCheck] = await pool.execute('SELECT id FROM bookings WHERE id = ?', [booking_id]);
+    if (bCheck.length === 0) {
+      return res.status(404).json({ success: false, message: `Booking #${booking_id} not found` });
     }
 
     const payAmount = parseFloat(amount);

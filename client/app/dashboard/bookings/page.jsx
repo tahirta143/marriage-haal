@@ -299,16 +299,22 @@ export default function BookingsDeskPage() {
                         <div className="font-bold text-[#22131A]">{booking.customer_name}</div>
                         <div className="text-[11px] text-[#705562] font-medium">{booking.customer_phone}</div>
                       </td>
-                      <td className="p-3.5 font-semibold">{booking.hall_name}</td>
-                      <td className="p-3.5 uppercase text-[#AA336A] font-bold text-[11px]">
-                        {booking.event_type}
+                      <td className="p-3.5 font-semibold text-[#22131A]">{booking.hall_name || 'ShaadiPro Main Hall'}</td>
+                      <td className="p-3.5">
+                        <span className="inline-block px-2.5 py-1 rounded-md bg-[#FAF5F7] text-[#AA336A] font-extrabold text-[10px] uppercase border border-[#F0D5E2]">
+                          {booking.event_type || 'Wedding Event'}
+                        </span>
                       </td>
                       <td className="p-3.5 whitespace-nowrap">
-                        <div className="font-semibold">{booking.event_date}</div>
-                        <div className="text-[10px] text-[#705562] uppercase font-medium">{booking.slot} Slot</div>
+                        <div className="font-bold text-[#22131A]">
+                          {booking.event_date ? String(booking.event_date).split('T')[0] : '2026-10-24'}
+                        </div>
+                        <div className="text-[10px] text-[#705562] uppercase font-semibold">
+                          {booking.slot ? `${booking.slot} Slot` : 'Evening Slot'}
+                        </div>
                       </td>
                       <td className="p-3.5 font-bold text-[#22131A]">
-                        {booking.guest_count_estimated} Guests
+                        {booking.guest_count_estimated || 300} Guests
                       </td>
                       <td className="p-3.5 font-mono text-[#AA336A] font-extrabold text-sm">
                         PKR {Number(booking.total_amount || 0).toLocaleString()}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Link from 'next/link';
 import {
   Sparkles,
@@ -11,7 +11,6 @@ import {
   Music,
   Camera,
   ArrowRight,
-  Search,
   Grid,
   Calendar,
   Car,
@@ -23,6 +22,10 @@ import {
   Heart,
   ShieldCheck,
   Zap,
+  Volume2,
+  VolumeX,
+  Play,
+  Pause,
 } from 'lucide-react';
 
 const VENDOR_MODULES = [
@@ -198,46 +201,91 @@ const EVENT_MODULES = [
 ];
 
 export default function DashboardHomePage() {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [isMuted, setIsMuted] = useState(true);
+  const videoRef = useRef(null);
+
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
 
   return (
     <div className="space-y-12 max-w-7xl mx-auto pb-12">
-      {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#22131A] via-[#3B1C2B] to-[#541E38] p-8 sm:p-12 text-white shadow-xl">
-        <div className="absolute top-0 right-0 -mt-16 -mr-16 w-96 h-96 bg-[#AA336A]/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/3 -mb-16 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+      {/* Dynamic Video Hero Section (Zero Gradient - Real Video Background) */}
+      <div className="relative rounded-3xl overflow-hidden border border-[#F0D5E2] shadow-xl min-h-[420px] sm:min-h-[480px] flex items-center justify-center p-8 sm:p-14 text-white">
+        {/* Background Video */}
+        <video
+          ref={videoRef}
+          autoPlay
+          loop
+          muted={isMuted}
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover scale-105 filter brightness-105 contrast-105 transition-all duration-700"
+        >
+          <source src="/video.mp4" type="video/mp4" />
+        </video>
 
-        <div className="relative z-10 max-w-3xl space-y-6">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[#F4C0D5] text-xs font-bold uppercase tracking-widest shadow-sm">
+        {/* Low-Opacity Black Overlay for clear text & video visibility */}
+        <div className="absolute inset-0 bg-black/30" />
+
+        {/* Controls */}
+        <div className="absolute bottom-4 right-4 z-20 flex items-center gap-2">
+          <button
+            onClick={togglePlay}
+            className="p-2.5 rounded-full bg-white/20 hover:bg-white/40 text-white backdrop-blur-md transition-colors border border-white/30"
+          >
+            {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+          </button>
+          <button
+            onClick={toggleMute}
+            className="p-2.5 rounded-full bg-white/20 hover:bg-white/40 text-white backdrop-blur-md transition-colors border border-white/30"
+          >
+            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+          </button>
+        </div>
+
+        <div className="relative z-10 max-w-3xl space-y-6 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white text-xs font-bold uppercase tracking-wider shadow-sm">
             <Sparkles className="w-4 h-4 text-amber-300" />
-            ShaadiPro Modular Event Portal
+            Shaadi Management Desk
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-extrabold font-serif-title tracking-tight leading-tight">
-            Explore <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F4C0D5] via-amber-200 to-white">Wedding Modules</span> & Packages
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold font-serif-title tracking-tight leading-tight drop-shadow-md">
+            Explore Premium Wedding Modules
           </h1>
 
-          <p className="text-gray-200 text-sm sm:text-base leading-relaxed font-normal max-w-2xl">
+          <p className="text-white text-sm sm:text-base leading-relaxed font-semibold max-w-2xl mx-auto drop-shadow">
             Select a service, venue property, or event function module below to view specialized vendors, rates, and direct booking options.
           </p>
 
-          <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 max-w-2xl">
-            <div className="relative flex-1">
-              <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search makeup artists, photographers, marquees, catering..."
-                className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#AA336A] focus:bg-white/20 transition-all"
-              />
-            </div>
+          <div className="pt-3 flex flex-wrap items-center justify-center gap-4">
             <Link
               href="/dashboard/book-event"
-              className="px-7 py-3.5 rounded-2xl bg-[#AA336A] hover:bg-[#8E2656] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-[#AA336A]/40 flex items-center justify-center gap-2 transition-all flex-shrink-0"
+              className="px-8 py-3.5 rounded-2xl bg-[#AA336A] hover:bg-[#8E2656] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg flex items-center gap-2 transition-all"
             >
               <Zap className="w-4 h-4" />
               <span>Event Customizer</span>
+            </Link>
+            <Link
+              href="/categories"
+              className="px-8 py-3.5 rounded-2xl bg-white hover:bg-gray-100 text-[#22131A] font-extrabold text-xs uppercase tracking-wider shadow-lg flex items-center gap-2 transition-all"
+            >
+              <Grid className="w-4 h-4 text-[#AA336A]" />
+              <span>All Categories</span>
             </Link>
           </div>
         </div>
@@ -261,16 +309,12 @@ export default function DashboardHomePage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {VENDOR_MODULES.filter(
-            (mod) =>
-              searchQuery === '' ||
-              mod.title.toLowerCase().includes(searchQuery.toLowerCase())
-          ).map((mod) => {
+          {VENDOR_MODULES.map((mod) => {
             const Icon = mod.icon;
             return (
               <Link
                 key={mod.slug}
-                href={`/dashboard/categories/${mod.slug}`}
+                href={`/categories/${mod.slug}`}
                 className="group relative rounded-3xl bg-white border border-[#F0D5E2] overflow-hidden shadow-sm hover:shadow-xl hover:border-[#AA336A]/50 transition-all duration-300 flex flex-col justify-between"
               >
                 <div className="h-44 w-full bg-gray-100 relative overflow-hidden">
@@ -337,7 +381,7 @@ export default function DashboardHomePage() {
           {VENUE_MODULES.map((vMod) => (
             <Link
               key={vMod.type}
-              href={`/dashboard/venues/${vMod.type}`}
+              href={`/venues/${vMod.type}`}
               className="group relative rounded-3xl bg-white border border-[#F0D5E2] overflow-hidden shadow-sm hover:shadow-xl hover:border-[#AA336A]/50 transition-all duration-300 flex flex-col justify-between"
             >
               <div className="h-48 w-full bg-gray-100 relative overflow-hidden">
@@ -394,7 +438,7 @@ export default function DashboardHomePage() {
             return (
               <Link
                 key={eMod.slug}
-                href={`/dashboard/events/${eMod.slug}`}
+                href={`/events/${eMod.slug}`}
                 className="group relative rounded-3xl bg-white border border-[#F0D5E2] overflow-hidden shadow-sm hover:shadow-xl hover:border-[#AA336A]/50 transition-all duration-300 flex flex-col justify-between"
               >
                 <div className="h-44 w-full bg-gray-100 relative overflow-hidden">

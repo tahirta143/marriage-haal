@@ -60,10 +60,10 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-[#E5E7EB] text-[#AA336A] text-xs font-bold tracking-wider uppercase mb-4 shadow-sm">
             <Sparkles className="w-3.5 h-3.5" />
-            ShaadiPro Management Suite
+            Shaadi Management Suite
           </div>
-          <h1 className="text-4xl font-extrabold font-serif-title tracking-tight text-[#111827] mb-2">
-            Shaadi<span className="text-[#AA336A]">Pro</span>
+          <h1 className="text-4xl font-extrabold font-serif-title tracking-tight text-[#AA336A] mb-2">
+            Shaadi
           </h1>
           <p className="text-gray-500 text-sm font-medium">
             Unified Permission-Based Portal

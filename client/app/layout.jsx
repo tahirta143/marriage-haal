@@ -2,7 +2,7 @@ import './globals.css';
 import { AuthProvider } from '../lib/auth';
 
 export const metadata = {
-  title: 'ShaadiPro — Marriage Hall & Event Management System',
+  title: 'Shaadi — Marriage Hall & Event Management System',
   description: 'Enterprise Marriage Hall Booking & Operations Platform',
 };
 

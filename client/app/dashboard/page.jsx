@@ -43,21 +43,28 @@ const CATEGORY_COLORS = ['#AA336A', '#E6A15C', '#3B82F6', '#10B981', '#8B5CF6'];
 export default function UnifiedDashboardPage() {
   const { user, permissions = [] } = useAuth();
   const [analytics, setAnalytics] = useState(null);
+  const [bookings, setBookings] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [loadingAnalytics, setLoadingAnalytics] = useState(true);
 
   useEffect(() => {
-    fetchAnalyticsData();
+    fetchDashboardData();
   }, []);
 
-  const fetchAnalyticsData = async () => {
+  const fetchDashboardData = async () => {
     try {
       setLoadingAnalytics(true);
-      const res = await api.get('/reports/analytics');
-      if (res.data.success) {
-        setAnalytics(res.data.analytics);
-      }
+      const [aRes, bRes, jRes] = await Promise.all([
+        api.get('/reports/analytics').catch(() => ({ data: { success: false } })),
+        api.get('/bookings').catch(() => ({ data: { success: false } })),
+        api.get('/jobs/my-jobs').catch(() => ({ data: { success: false } })),
+      ]);
+
+      if (aRes.data?.success) setAnalytics(aRes.data.analytics);
+      if (bRes.data?.success) setBookings(bRes.data.bookings || []);
+      if (jRes.data?.success) setTasks(jRes.data.tasks || []);
     } catch (err) {
-      console.error('Failed to load dashboard charts analytics:', err);
+      console.error('Failed to load dashboard data:', err);
     } finally {
       setLoadingAnalytics(false);
     }
@@ -328,46 +335,38 @@ export default function UnifiedDashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E5E7EB] text-[#111827]">
-                <tr className="hover:bg-gray-50">
-                  <td className="p-3 font-mono text-[#AA336A] font-bold">#BK-1082</td>
-                  <td className="p-3 font-bold text-[#111827]">Usman Tariq</td>
-                  <td className="p-3">Crystal Grand Ballroom</td>
-                  <td className="p-3 uppercase text-purple-700 font-bold">Baraat</td>
-                  <td className="p-3">Oct 14, 2026 (Night)</td>
-                  <td className="p-3">450 Guests</td>
-                  <td className="p-3">
-                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                      Confirmed
-                    </span>
-                  </td>
-                  <td className="p-3 text-right">
-                    <Can permission={PERMISSIONS.BOOKING_EDIT}>
-                      <a href="/dashboard/bookings" className="px-2.5 py-1 rounded-lg bg-gray-50 hover:bg-gray-100 border border-[#E5E7EB] text-gray-700 text-[11px] font-semibold">
-                        Manage
-                      </a>
-                    </Can>
-                  </td>
-                </tr>
-                <tr className="hover:bg-gray-50">
-                  <td className="p-3 font-mono text-[#AA336A] font-bold">#BK-1083</td>
-                  <td className="p-3 font-bold text-[#111827]">Ayesha Khan</td>
-                  <td className="p-3">Emerald Marquee</td>
-                  <td className="p-3 uppercase text-[#AA336A] font-bold">Mehndi</td>
-                  <td className="p-3">Oct 18, 2026 (Night)</td>
-                  <td className="p-3">300 Guests</td>
-                  <td className="p-3">
-                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
-                      Tentative
-                    </span>
-                  </td>
-                  <td className="p-3 text-right">
-                    <Can permission={PERMISSIONS.BOOKING_EDIT}>
-                      <a href="/dashboard/bookings" className="px-2.5 py-1 rounded-lg bg-gray-50 hover:bg-gray-100 border border-[#E5E7EB] text-gray-700 text-[11px] font-semibold">
-                        Manage
-                      </a>
-                    </Can>
-                  </td>
-                </tr>
+                {bookings.length > 0 ? (
+                  bookings.slice(0, 5).map((b) => (
+                    <tr key={b.id} className="hover:bg-gray-50">
+                      <td className="p-3 font-mono text-[#AA336A] font-bold">#{b.id}</td>
+                      <td className="p-3 font-bold text-[#111827]">{b.customer_name}</td>
+                      <td className="p-3">{b.hall_name}</td>
+                      <td className="p-3 uppercase text-[#AA336A] font-bold">{b.event_type}</td>
+                      <td className="p-3 whitespace-nowrap">
+                        {b.event_date ? String(b.event_date).split('T')[0] : '2026-10-24'} ({b.slot || 'Night'})
+                      </td>
+                      <td className="p-3">{b.guest_count_estimated} Guests</td>
+                      <td className="p-3">
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold capitalize bg-blue-100 text-blue-800 border border-blue-300">
+                          {b.status}
+                        </span>
+                      </td>
+                      <td className="p-3 text-right">
+                        <Can permission={PERMISSIONS.BOOKING_EDIT}>
+                          <a href={`/dashboard/bookings/${b.id}`} className="px-2.5 py-1 rounded-lg bg-gray-50 hover:bg-gray-100 border border-[#E5E7EB] text-gray-700 text-[11px] font-semibold">
+                            Manage
+                          </a>
+                        </Can>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="8" className="p-6 text-center text-xs text-gray-400">
+                      No recent bookings found.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -379,18 +378,26 @@ export default function UnifiedDashboardPage() {
         <div className="bg-white rounded-2xl p-6 border border-[#E5E7EB] shadow-sm">
           <h2 className="text-base font-bold text-[#111827] mb-3 flex items-center gap-2">
             <Briefcase className="w-5 h-5 text-blue-600" />
-            Assigned Service Execution Tasks
+            Assigned Service Execution Tasks ({tasks.length})
           </h2>
           <div className="space-y-3">
-            <div className="p-4 rounded-xl bg-gray-50 border border-[#E5E7EB] flex items-center justify-between">
-              <div>
-                <div className="text-sm font-bold text-[#111827]">Stage Floral Decor Setup</div>
-                <div className="text-xs text-gray-500">Crystal Grand Ballroom • Event #BK-1082</div>
+            {tasks.length > 0 ? (
+              tasks.slice(0, 5).map((t) => (
+                <div key={t.id} className="p-4 rounded-xl bg-gray-50 border border-[#E5E7EB] flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-bold text-[#111827]">{t.package_name || t.category_name}</div>
+                    <div className="text-xs text-gray-500">{t.hall_name} • Event #{t.booking_id} • {t.customer_name}</div>
+                  </div>
+                  <span className="px-3 py-1 rounded-full text-xs font-bold uppercase bg-blue-100 text-blue-800 border border-blue-300">
+                    {t.status || 'Assigned'}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="p-4 text-center text-xs text-gray-400">
+                No tasks assigned to your account yet.
               </div>
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-300">
-                In Progress
-              </span>
-            </div>
+            )}
           </div>
         </div>
       </Can>
