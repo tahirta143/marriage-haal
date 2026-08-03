@@ -95,12 +95,13 @@ exports.getVendorById = async (req, res) => {
 // POST /api/vendors - Register partner vendor in MySQL
 exports.createVendor = async (req, res) => {
   try {
-    const { business_name, category_id, commission_percent, user_id, image_url, gallery } = req.body;
+    const { business_name, category_id, commission_percent, starting_price, user_id, image_url, gallery } = req.body;
     if (!business_name || !category_id) {
       return res.status(400).json({ success: false, message: 'Business name and category are required' });
     }
 
     const comm = commission_percent ? parseFloat(commission_percent) : 10.00;
+    const startPrice = starting_price ? parseFloat(starting_price) : 25000.00;
     const img = image_url || 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80';
     const galleryJson = gallery ? (typeof gallery === 'string' ? gallery : JSON.stringify(gallery)) : null;
 
@@ -115,8 +116,8 @@ exports.createVendor = async (req, res) => {
     }
 
     const [result] = await pool.execute(
-      'INSERT INTO vendors (user_id, category_id, business_name, image_url, status, commission_percent, gallery) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [targetUserId, category_id, business_name, img, 'approved', comm, galleryJson]
+      'INSERT INTO vendors (user_id, category_id, business_name, starting_price, image_url, status, commission_percent, gallery) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [targetUserId, category_id, business_name, startPrice, img, 'approved', comm, galleryJson]
     );
 
     return res.status(201).json({ success: true, vendorId: result.insertId, message: 'Vendor partner registered successfully' });
@@ -146,13 +147,14 @@ exports.getAllStaff = async (req, res) => {
 exports.updateVendor = async (req, res) => {
   try {
     const { id } = req.params;
-    const { business_name, category_id, commission_percent, image_url, status, gallery } = req.body;
+    const { business_name, category_id, commission_percent, starting_price, image_url, status, gallery } = req.body;
 
     if (!business_name || !category_id) {
       return res.status(400).json({ success: false, message: 'Business name and category are required' });
     }
 
     const comm = commission_percent !== undefined ? parseFloat(commission_percent) : undefined;
+    const startPrice = starting_price !== undefined ? parseFloat(starting_price) : undefined;
     const allowedStatuses = ['unverified', 'pending', 'approved'];
     const safeStatus = allowedStatuses.includes(status) ? status : undefined;
     const galleryJson = gallery !== undefined ? (typeof gallery === 'string' ? gallery : JSON.stringify(gallery)) : undefined;
@@ -164,6 +166,7 @@ exports.updateVendor = async (req, res) => {
     fields.push('business_name = ?'); params.push(business_name);
     fields.push('category_id = ?'); params.push(category_id);
     if (comm !== undefined) { fields.push('commission_percent = ?'); params.push(comm); }
+    if (startPrice !== undefined) { fields.push('starting_price = ?'); params.push(startPrice); }
     if (image_url !== undefined) { fields.push('image_url = ?'); params.push(image_url); }
     if (safeStatus !== undefined) { fields.push('status = ?'); params.push(safeStatus); }
     if (galleryJson !== undefined) { fields.push('gallery = ?'); params.push(galleryJson); }

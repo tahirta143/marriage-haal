@@ -118,6 +118,14 @@ export default function BookEventPage() {
   // Compute Live Running Total
   const calculateTotals = () => {
     let subtotal = 0;
+
+    // Include Venue Hall Rental Price if selected
+    if (selectedHall) {
+      const flatPrice = Number(selectedHall.price_per_event || 150000);
+      const perHeadPrice = Number(selectedHall.price_per_head || 1200) * Number(guestCount || 0);
+      subtotal += flatPrice + perHeadPrice;
+    }
+
     const items = Object.values(selectedPackages).map((pkg) => {
       let lineTotal = Number(pkg.price);
       if (pkg.pricing_type === 'per_head') {
@@ -688,30 +696,40 @@ export default function BookEventPage() {
                 </div>
               </div>
 
-              {/* Selected Packages List */}
+              {/* Selected Packages & Venue Rental List */}
               <div className="space-y-2">
                 <div className="text-[11px] font-bold uppercase tracking-wider text-[#604453]">
-                  Selected Packages ({selectedItemsList.length}):
+                  Selected Venue & Services:
                 </div>
 
-                <div className="space-y-2 max-h-48 overflow-y-auto pr-1 divide-y divide-[#F0D5E2] text-xs">
-                  {selectedItemsList.length === 0 ? (
-                    <div className="text-[#9E7D8C] text-center py-3">No packages selected yet.</div>
-                  ) : (
-                    selectedItemsList.map((item) => (
-                      <div key={item.id} className="pt-2 flex items-center justify-between">
-                        <div>
-                          <div className="font-bold text-[#22131A]">{item.name}</div>
-                          <div className="text-[10px] text-[#705562]">
-                            {item.category_name} {item.pricing_type === 'per_head' ? `(${guestCount} guests)` : ''}
-                          </div>
-                        </div>
-                        <div className="font-mono font-bold text-[#AA336A]">
-                          PKR {item.lineTotal.toLocaleString()}
+                <div className="space-y-2 max-h-52 overflow-y-auto pr-1 divide-y divide-[#F0D5E2] text-xs">
+                  {selectedHall && (
+                    <div className="pt-2 flex items-center justify-between">
+                      <div>
+                        <div className="font-bold text-[#22131A]">{selectedHall.name}</div>
+                        <div className="text-[10px] text-[#705562]">
+                          Venue Rental ({guestCount} guests)
                         </div>
                       </div>
-                    ))
+                      <div className="font-mono font-bold text-[#AA336A]">
+                        PKR {(Number(selectedHall.price_per_event || 150000) + Number(selectedHall.price_per_head || 1200) * Number(guestCount || 0)).toLocaleString()}
+                      </div>
+                    </div>
                   )}
+
+                  {selectedItemsList.map((item) => (
+                    <div key={item.id} className="pt-2 flex items-center justify-between">
+                      <div>
+                        <div className="font-bold text-[#22131A]">{item.name}</div>
+                        <div className="text-[10px] text-[#705562]">
+                          {item.category_name} {item.pricing_type === 'per_head' ? `(${guestCount} guests)` : ''}
+                        </div>
+                      </div>
+                      <div className="font-mono font-bold text-[#AA336A]">
+                        PKR {item.lineTotal.toLocaleString()}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 

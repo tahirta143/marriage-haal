@@ -32,6 +32,8 @@ export default function HallsPage() {
   const [venueType, setVenueType] = useState('Ballroom');
   const [capacityMin, setCapacityMin] = useState('200');
   const [capacityMax, setCapacityMax] = useState('800');
+  const [pricePerEvent, setPricePerEvent] = useState('150000');
+  const [pricePerHead, setPricePerHead] = useState('1200');
   const [address, setAddress] = useState('');
   const [amenitiesInput, setAmenitiesInput] = useState('AC, VIP Parking, Sound System, Backup Generator');
   const [imageUrl, setImageUrl] = useState('');
@@ -83,6 +85,8 @@ export default function HallsPage() {
     setVenueType('Ballroom');
     setCapacityMin('200');
     setCapacityMax('800');
+    setPricePerEvent('150000');
+    setPricePerHead('1200');
     setAddress('');
     setAmenitiesInput('AC, VIP Parking, Sound System, Backup Generator');
     setImageUrl('');
@@ -95,6 +99,8 @@ export default function HallsPage() {
     setVenueType(hall.venue_type || 'Ballroom');
     setCapacityMin(hall.capacity_min);
     setCapacityMax(hall.capacity_max);
+    setPricePerEvent(hall.price_per_event || '150000');
+    setPricePerHead(hall.price_per_head || '1200');
     setAddress(hall.address || '');
     const amenitiesArr = Array.isArray(hall.amenities)
       ? hall.amenities
@@ -124,6 +130,8 @@ export default function HallsPage() {
         venue_type: venueType,
         capacity_min: parseInt(capacityMin),
         capacity_max: parseInt(capacityMax),
+        price_per_event: parseFloat(pricePerEvent || 0),
+        price_per_head: parseFloat(pricePerHead || 0),
         address,
         amenities: amenitiesArr,
         image_url: imageUrl,
@@ -272,11 +280,19 @@ export default function HallsPage() {
                         </div>
                       </div>
 
-                      <div className="p-3 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] flex items-center justify-between text-xs">
-                        <span className="text-[#705562] font-semibold">Guest Capacity</span>
-                        <span className="font-mono font-bold text-[#AA336A]">
-                          {hall.capacity_min} - {hall.capacity_max} Guests
-                        </span>
+                      <div className="p-3 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] space-y-1.5 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[#705562] font-semibold">Guest Capacity</span>
+                          <span className="font-mono font-bold text-[#AA336A]">
+                            {hall.capacity_min} - {hall.capacity_max} Guests
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between border-t border-[#F0D5E2] pt-1.5">
+                          <span className="text-[#705562] font-semibold">Venue Pricing</span>
+                          <span className="font-bold text-[#AA336A]">
+                            PKR {Number(hall.price_per_event || 150000).toLocaleString()} + PKR {Number(hall.price_per_head || 1200).toLocaleString()}/head
+                          </span>
+                        </div>
                       </div>
 
                       <div className="space-y-1.5">
@@ -373,6 +389,36 @@ export default function HallsPage() {
                       value={capacityMax}
                       onChange={(e) => setCapacityMax(e.target.value)}
                       placeholder="800"
+                      required
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-[#604453] uppercase mb-1">
+                      Hall Rental Price (PKR)
+                    </label>
+                    <input
+                      type="number"
+                      value={pricePerEvent}
+                      onChange={(e) => setPricePerEvent(e.target.value)}
+                      placeholder="150000"
+                      required
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#604453] uppercase mb-1">
+                      Price Per Head (PKR)
+                    </label>
+                    <input
+                      type="number"
+                      value={pricePerHead}
+                      onChange={(e) => setPricePerHead(e.target.value)}
+                      placeholder="1200"
                       required
                       className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A]"
                     />

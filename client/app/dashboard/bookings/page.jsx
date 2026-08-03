@@ -93,6 +93,15 @@ export default function BookingsDeskPage() {
 
   const calculateRunningTotal = () => {
     let subtotal = 0;
+    const selectedHall = halls.find((h) => h.id === parseInt(hallId));
+    if (selectedHall) {
+      const pEvt = Number(selectedHall.price_per_event || 150000);
+      const pHd = Number(selectedHall.price_per_head || 1200) * Number(guestCount || 0);
+      subtotal += pEvt + pHd;
+    } else {
+      subtotal += 150000 + (1200 * Number(guestCount || 0));
+    }
+
     const items = Object.values(selectedPackages).map((pkg) => {
       let lineTotal = Number(pkg.price);
       if (pkg.pricing_type === 'per_head') {
@@ -125,6 +134,7 @@ export default function BookingsDeskPage() {
         event_date: eventDate,
         slot: eventSlot,
         guest_count: guestCount,
+        total_amount: subtotal,
         selected_services: items,
       };
 
@@ -137,7 +147,8 @@ export default function BookingsDeskPage() {
         fetchInitialData();
       }
     } catch (err) {
-      alert('Failed to create booking inquiry');
+      const msg = err.response?.data?.message || err.message || 'Failed to create booking inquiry';
+      alert(`Booking Inquiry Failed: ${msg}`);
     }
   };
 

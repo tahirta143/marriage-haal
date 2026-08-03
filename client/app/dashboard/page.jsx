@@ -124,10 +124,10 @@ export default function UnifiedDashboardPage() {
                 <div className="p-2 rounded-lg bg-emerald-50 text-emerald-700"><DollarSign className="w-4 h-4" /></div>
               </div>
               <div className="text-2xl font-extrabold text-[#111827]">
-                PKR {Number(analytics?.total_revenue || 4850000).toLocaleString()}
+                PKR {Number(analytics?.total_revenue ?? 0).toLocaleString()}
               </div>
               <div className="text-xs text-emerald-700 font-semibold flex items-center gap-1 mt-2">
-                <TrendingUp className="w-3.5 h-3.5" /> +18.4% vs last month
+                <TrendingUp className="w-3.5 h-3.5" /> Realtime Database Sync
               </div>
             </div>
 
@@ -137,9 +137,9 @@ export default function UnifiedDashboardPage() {
                 <div className="p-2 rounded-lg bg-[#AA336A]/10 text-[#AA336A]"><Building2 className="w-4 h-4" /></div>
               </div>
               <div className="text-2xl font-extrabold text-[#111827]">
-                {analytics?.active_halls || 3} Grand Halls
+                {analytics?.active_halls ?? 0} Grand Halls
               </div>
-              <div className="text-xs text-gray-500 font-medium mt-2">Max Capacity: 2,600 Guests</div>
+              <div className="text-xs text-gray-500 font-medium mt-2">Active database venues</div>
             </div>
 
             <div className="bg-white rounded-2xl p-5 border border-[#E5E7EB] shadow-sm">
@@ -148,9 +148,9 @@ export default function UnifiedDashboardPage() {
                 <div className="p-2 rounded-lg bg-blue-50 text-blue-700"><Calendar className="w-4 h-4" /></div>
               </div>
               <div className="text-2xl font-extrabold text-[#111827]">
-                {analytics?.confirmed_bookings || 24} Bookings
+                {analytics?.confirmed_bookings ?? 0} Bookings
               </div>
-              <div className="text-xs text-blue-700 font-semibold mt-2">Scheduled for next 30 days</div>
+              <div className="text-xs text-blue-700 font-semibold mt-2">Scheduled confirmed events</div>
             </div>
 
             <div className="bg-white rounded-2xl p-5 border border-[#E5E7EB] shadow-sm">
@@ -159,7 +159,7 @@ export default function UnifiedDashboardPage() {
                 <div className="p-2 rounded-lg bg-purple-50 text-purple-700"><Users className="w-4 h-4" /></div>
               </div>
               <div className="text-2xl font-extrabold text-[#AA336A]">
-                PKR {Number(analytics?.pending_receivables || 620000).toLocaleString()}
+                PKR {Number(analytics?.pending_receivables ?? 0).toLocaleString()}
               </div>
               <div className="text-xs text-gray-500 font-medium mt-2">Installment tokens due</div>
             </div>
@@ -204,7 +204,7 @@ export default function UnifiedDashboardPage() {
                         stroke="#9CA3AF"
                         fontSize={11}
                         tickLine={false}
-                        tickFormatter={(val) => `PKR ${(val / 1000000).toFixed(1)}M`}
+                        tickFormatter={(val) => val >= 1000000 ? `PKR ${(val / 1000000).toFixed(1)}M` : val >= 1000 ? `PKR ${(val / 1000).toFixed(0)}k` : `PKR ${val}`}
                       />
                       <Tooltip
                         contentStyle={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB', borderRadius: '0.75rem', fontSize: '12px', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}
@@ -293,7 +293,7 @@ export default function UnifiedDashboardPage() {
                   <BarChart data={hallPerformanceData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
                     <XAxis dataKey="hall_name" stroke="#9CA3AF" fontSize={11} tickLine={false} />
-                    <YAxis stroke="#9CA3AF" fontSize={11} tickLine={false} tickFormatter={(val) => `PKR ${(val / 1000000).toFixed(1)}M`} />
+                    <YAxis stroke="#9CA3AF" fontSize={11} tickLine={false} tickFormatter={(val) => val >= 1000000 ? `PKR ${(val / 1000000).toFixed(1)}M` : val >= 1000 ? `PKR ${(val / 1000).toFixed(0)}k` : `PKR ${val}`} />
                     <Tooltip
                       contentStyle={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB', borderRadius: '0.75rem', fontSize: '12px' }}
                       formatter={(val) => [`PKR ${Number(val).toLocaleString()}`, 'Venue Revenue']}

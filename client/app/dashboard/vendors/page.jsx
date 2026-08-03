@@ -34,6 +34,7 @@ export default function VendorsPage() {
   const [businessName, setBusinessName] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [commission, setCommission] = useState('10');
+  const [startingPrice, setStartingPrice] = useState('25000');
   const [imageUrl, setImageUrl] = useState('');
   const [galleryImages, setGalleryImages] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -44,6 +45,7 @@ export default function VendorsPage() {
   const [editBusinessName, setEditBusinessName] = useState('');
   const [editCategoryId, setEditCategoryId] = useState('');
   const [editCommission, setEditCommission] = useState('10');
+  const [editStartingPrice, setEditStartingPrice] = useState('25000');
   const [editImageUrl, setEditImageUrl] = useState('');
   const [editGalleryImages, setEditGalleryImages] = useState([]);
   const [editStatus, setEditStatus] = useState('approved');
@@ -155,6 +157,7 @@ export default function VendorsPage() {
         business_name: businessName,
         category_id: categoryId,
         commission_percent: parseFloat(commission),
+        starting_price: parseFloat(startingPrice || 25000),
         image_url: imageUrl,
         gallery: galleryImages,
       });
@@ -164,6 +167,7 @@ export default function VendorsPage() {
         setShowModal(false);
         setBusinessName('');
         setCommission('10');
+        setStartingPrice('25000');
         setImageUrl('');
         setGalleryImages([]);
         fetchData();
@@ -183,6 +187,7 @@ export default function VendorsPage() {
     setEditBusinessName(vendor.business_name);
     setEditCategoryId(vendor.category_id?.toString() || '');
     setEditCommission(vendor.commission_percent?.toString() || '10');
+    setEditStartingPrice(vendor.starting_price?.toString() || '25000');
     setEditImageUrl(vendor.image_url || '');
 
     let parsedGallery = [];
@@ -209,6 +214,7 @@ export default function VendorsPage() {
         business_name: editBusinessName,
         category_id: editCategoryId,
         commission_percent: parseFloat(editCommission),
+        starting_price: parseFloat(editStartingPrice || 25000),
         image_url: editImageUrl,
         gallery: editGalleryImages,
         status: editStatus,
@@ -354,11 +360,19 @@ export default function VendorsPage() {
                         </div>
                       </div>
 
-                      <div className="p-3 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] flex items-center justify-between text-xs">
-                        <span className="text-[#705562] font-semibold">Partner Commission</span>
-                        <span className="font-mono font-extrabold text-[#AA336A] text-sm">
-                          {v.commission_percent}%
-                        </span>
+                      <div className="p-3 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] space-y-1.5 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[#705562] font-semibold">Partner Commission</span>
+                          <span className="font-mono font-extrabold text-[#AA336A] text-sm">
+                            {v.commission_percent}%
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between border-t border-[#F0D5E2] pt-1.5">
+                          <span className="text-[#705562] font-semibold">Starting Price</span>
+                          <span className="font-bold text-[#22131A]">
+                            PKR {Number(v.starting_price || 25000).toLocaleString()}
+                          </span>
+                        </div>
                       </div>
 
                       <div className="text-xs text-[#705562]">
@@ -437,17 +451,31 @@ export default function VendorsPage() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-[#604453] uppercase mb-1">Commission Rate (%)</label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    value={commission}
-                    onChange={(e) => setCommission(e.target.value)}
-                    placeholder="10.0"
-                    required
-                    className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] focus:outline-none focus:border-[#AA336A]"
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-[#604453] uppercase mb-1">Commission Rate (%)</label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      value={commission}
+                      onChange={(e) => setCommission(e.target.value)}
+                      placeholder="10.0"
+                      required
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] focus:outline-none focus:border-[#AA336A]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#604453] uppercase mb-1">Starting Price (PKR)</label>
+                    <input
+                      type="number"
+                      value={startingPrice}
+                      onChange={(e) => setStartingPrice(e.target.value)}
+                      placeholder="25000"
+                      required
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] focus:outline-none focus:border-[#AA336A]"
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -570,16 +598,29 @@ export default function VendorsPage() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-[#604453] uppercase mb-1">Commission Rate (%)</label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    value={editCommission}
-                    onChange={(e) => setEditCommission(e.target.value)}
-                    required
-                    className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] focus:outline-none focus:border-[#AA336A]"
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-[#604453] uppercase mb-1">Commission Rate (%)</label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      value={editCommission}
+                      onChange={(e) => setEditCommission(e.target.value)}
+                      required
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] focus:outline-none focus:border-[#AA336A]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#604453] uppercase mb-1">Starting Price (PKR)</label>
+                    <input
+                      type="number"
+                      value={editStartingPrice}
+                      onChange={(e) => setEditStartingPrice(e.target.value)}
+                      required
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] focus:outline-none focus:border-[#AA336A]"
+                    />
+                  </div>
                 </div>
 
                 <div>

@@ -125,6 +125,8 @@ CREATE TABLE IF NOT EXISTS halls (
   venue_type VARCHAR(50) NOT NULL DEFAULT 'Ballroom',
   capacity_min INT NOT NULL DEFAULT 100,
   capacity_max INT NOT NULL DEFAULT 1000,
+  price_per_event DECIMAL(10,2) DEFAULT 150000.00,
+  price_per_head DECIMAL(10,2) DEFAULT 1200.00,
   address VARCHAR(255),
   amenities JSON,
   image_url VARCHAR(255) NULL,
@@ -276,4 +278,16 @@ CREATE TABLE IF NOT EXISTS sub_events (
   slug VARCHAR(100) NOT NULL UNIQUE,
   description TEXT,
   FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+);
+
+-- 21. NOTIFICATIONS
+CREATE TABLE IF NOT EXISTS notifications (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  user_id INT NULL,
+  title VARCHAR(255) NOT NULL,
+  message TEXT NOT NULL,
+  type VARCHAR(50) DEFAULT 'booking',
+  link VARCHAR(255) DEFAULT '/dashboard/bookings',
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

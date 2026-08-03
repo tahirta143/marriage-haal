@@ -74,7 +74,7 @@ exports.getSubVenues = async (req, res) => {
 // POST /api/halls - Create hall in MySQL
 exports.createHall = async (req, res) => {
   try {
-    const { name, city, venue_type, capacity_min, capacity_max, address, amenities, image_url } = req.body;
+    const { name, city, venue_type, capacity_min, capacity_max, price_per_event, price_per_head, address, amenities, image_url } = req.body;
     if (!name || !capacity_min || !capacity_max) {
       return res.status(400).json({ success: false, message: 'Hall name and capacities are required' });
     }
@@ -83,25 +83,20 @@ exports.createHall = async (req, res) => {
     const img = image_url || 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=800&q=80';
     const cty = city || 'Lahore';
     const vType = venue_type || 'Ballroom';
+    const pEvent = price_per_event !== undefined ? parseFloat(price_per_event) : 150000.00;
+    const pHead = price_per_head !== undefined ? parseFloat(price_per_head) : 1200.00;
 
     let result;
     try {
       [result] = await pool.execute(
+        'INSERT INTO halls (name, city, venue_type, capacity_min, capacity_max, price_per_event, price_per_head, address, amenities, image_url, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "active")',
+        [name, cty, vType, capacity_min, capacity_max, pEvent, pHead, address || '', jsonAmenities, img]
+      );
+    } catch (colErr1) {
+      [result] = await pool.execute(
         'INSERT INTO halls (name, city, venue_type, capacity_min, capacity_max, address, amenities, image_url, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, "active")',
         [name, cty, vType, capacity_min, capacity_max, address || '', jsonAmenities, img]
       );
-    } catch (colErr1) {
-      try {
-        [result] = await pool.execute(
-          'INSERT INTO halls (name, venue_type, capacity_min, capacity_max, address, amenities, image_url, status) VALUES (?, ?, ?, ?, ?, ?, ?, "active")',
-          [name, vType, capacity_min, capacity_max, address || '', jsonAmenities, img]
-        );
-      } catch (colErr2) {
-        [result] = await pool.execute(
-          'INSERT INTO halls (name, capacity_min, capacity_max, address, amenities, image_url, status) VALUES (?, ?, ?, ?, ?, ?, "active")',
-          [name, capacity_min, capacity_max, address || '', jsonAmenities, img]
-        );
-      }
     }
 
     return res.status(201).json({ success: true, hallId: result.insertId, message: 'Hall created successfully' });
@@ -115,30 +110,25 @@ exports.createHall = async (req, res) => {
 exports.updateHall = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, city, venue_type, capacity_min, capacity_max, address, amenities, image_url, status } = req.body;
+    const { name, city, venue_type, capacity_min, capacity_max, price_per_event, price_per_head, address, amenities, image_url, status } = req.body;
 
     const jsonAmenities = typeof amenities === 'string' ? amenities : JSON.stringify(amenities || []);
     const img = image_url || 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=800&q=80';
     const cty = city || 'Lahore';
     const vType = venue_type || 'Ballroom';
+    const pEvent = price_per_event !== undefined ? parseFloat(price_per_event) : 150000.00;
+    const pHead = price_per_head !== undefined ? parseFloat(price_per_head) : 1200.00;
 
     try {
+      await pool.execute(
+        'UPDATE halls SET name = ?, city = ?, venue_type = ?, capacity_min = ?, capacity_max = ?, price_per_event = ?, price_per_head = ?, address = ?, amenities = ?, image_url = ?, status = ? WHERE id = ?',
+        [name, cty, vType, capacity_min, capacity_max, pEvent, pHead, address || '', jsonAmenities, img, status || 'active', id]
+      );
+    } catch (colErr1) {
       await pool.execute(
         'UPDATE halls SET name = ?, city = ?, venue_type = ?, capacity_min = ?, capacity_max = ?, address = ?, amenities = ?, image_url = ?, status = ? WHERE id = ?',
         [name, cty, vType, capacity_min, capacity_max, address || '', jsonAmenities, img, status || 'active', id]
       );
-    } catch (colErr1) {
-      try {
-        await pool.execute(
-          'UPDATE halls SET name = ?, venue_type = ?, capacity_min = ?, capacity_max = ?, address = ?, amenities = ?, image_url = ?, status = ? WHERE id = ?',
-          [name, vType, capacity_min, capacity_max, address || '', jsonAmenities, img, status || 'active', id]
-        );
-      } catch (colErr2) {
-        await pool.execute(
-          'UPDATE halls SET name = ?, capacity_min = ?, capacity_max = ?, address = ?, amenities = ?, image_url = ?, status = ? WHERE id = ?',
-          [name, capacity_min, capacity_max, address || '', jsonAmenities, img, status || 'active', id]
-        );
-      }
     }
 
     return res.status(200).json({ success: true, message: 'Hall updated successfully' });

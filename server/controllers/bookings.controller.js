@@ -12,7 +12,9 @@ exports.getAllBookings = async (req, res) => {
              COALESCE(u.name, 'Guest Customer') as customer_name, 
              COALESCE(u.email, 'guest@shaadipro.com') as customer_email, 
              COALESCE(u.phone, 'N/A') as customer_phone, 
-             COALESCE(h.name, 'ShaadiPro Main Hall') as hall_name
+             COALESCE(h.name, 'ShaadiPro Main Hall') as hall_name,
+             COALESCE(h.price_per_event, 150000) as price_per_event,
+             COALESCE(h.price_per_head, 1200) as price_per_head
       FROM bookings b
       LEFT JOIN users u ON b.customer_id = u.id
       LEFT JOIN halls h ON b.hall_id = h.id
@@ -36,7 +38,19 @@ exports.getAllBookings = async (req, res) => {
     query += ' ORDER BY b.id DESC';
 
     const [rows] = await pool.execute(query, params);
-    return res.status(200).json({ success: true, count: rows.length, bookings: rows });
+
+    const processedBookings = rows.map((b) => {
+      let amt = Number(b.total_amount || 0);
+      if (amt <= 0) {
+        const pEvt = Number(b.price_per_event || 150000);
+        const pHd = Number(b.price_per_head || 1200);
+        const guests = Number(b.guest_count_estimated || 100);
+        amt = pEvt + (pHd * guests);
+      }
+      return { ...b, total_amount: amt };
+    });
+
+    return res.status(200).json({ success: true, count: processedBookings.length, bookings: processedBookings });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Failed to fetch bookings from database', error: error.message });
   }
@@ -76,13 +90,26 @@ exports.getBookingById = async (req, res) => {
     `, [id]);
 
     booking.services = services;
-    const computedTotal = services.reduce((sum, s) => sum + Number(s.price), 0);
-    booking.total_amount = Number(booking.total_amount) || computedTotal;
-
-    // Keep DB updated if total_amount was NULL
-    if (!bRows[0].total_amount && computedTotal > 0) {
-      await pool.execute('UPDATE bookings SET total_amount = ? WHERE id = ?', [computedTotal, id]);
+    const servicesSum = services.reduce((sum, s) => sum + Number(s.price), 0);
+    
+    let currentTotal = Number(booking.total_amount || 0);
+    if (currentTotal <= 0) {
+      let hallRentalCost = 0;
+      try {
+        const [hData] = await pool.execute('SELECT price_per_event, price_per_head FROM halls WHERE id = ?', [booking.hall_id]);
+        if (hData.length > 0) {
+          const pEvt = Number(hData[0].price_per_event || 150000);
+          const pHd = Number(hData[0].price_per_head || 1200);
+          hallRentalCost = pEvt + (pHd * Number(booking.guest_count_estimated || 100));
+        }
+      } catch (_) {
+        hallRentalCost = 150000 + (1200 * Number(booking.guest_count_estimated || 100));
+      }
+      currentTotal = hallRentalCost + servicesSum;
+      await pool.execute('UPDATE bookings SET total_amount = ? WHERE id = ?', [currentTotal, id]);
     }
+
+    booking.total_amount = currentTotal;
 
     return res.status(200).json({ success: true, booking });
   } catch (error) {
@@ -210,7 +237,20 @@ exports.createBooking = async (req, res) => {
       );
     }
 
-    const calculatedTotal = lineItemSum > 0 ? lineItemSum : Number(req.body.total_amount || 0);
+    // ── Calculate Hall Venue Rental Price ──────────────────────────────
+    let hallRentalCost = 0;
+    try {
+      const [hData] = await pool.execute('SELECT price_per_event, price_per_head FROM halls WHERE id = ?', [resolvedHallId]);
+      if (hData.length > 0) {
+        const pEvt = Number(hData[0].price_per_event || 150000);
+        const pHd = Number(hData[0].price_per_head || 1200);
+        hallRentalCost = pEvt + (pHd * guests);
+      }
+    } catch (_) {
+      hallRentalCost = 150000 + (1200 * guests);
+    }
+
+    const calculatedTotal = req.body.total_amount ? Number(req.body.total_amount) : (hallRentalCost + lineItemSum);
 
     // ── Update total_amount on bookings row ───────────────────────────
     await connection.execute(
@@ -219,12 +259,16 @@ exports.createBooking = async (req, res) => {
     );
 
     // ── Create Notification ───────────────────────────────────────────
-    const notifTitle = `🎉 New Booking Inquiry #${dbBookingId}`;
-    const notifMsg = `Customer ${customer_name || 'Guest'} requested a ${event_type || 'Wedding'} booking for ${guests} guests on ${event_date}.`;
-    await connection.execute(
-      `INSERT INTO notifications (user_id, title, message, type, link, is_read) VALUES (NULL, ?, ?, 'booking', '/dashboard/bookings', FALSE)`,
-      [notifTitle, notifMsg]
-    );
+    try {
+      const notifTitle = `🎉 New Booking Inquiry #${dbBookingId}`;
+      const notifMsg = `Customer ${customer_name || 'Guest'} requested a ${event_type || 'Wedding'} booking for ${guests} guests on ${event_date}.`;
+      await connection.execute(
+        `INSERT INTO notifications (user_id, title, message, type, link, is_read) VALUES (NULL, ?, ?, 'booking', '/dashboard/bookings', FALSE)`,
+        [notifTitle, notifMsg]
+      );
+    } catch (notifErr) {
+      console.warn('Notification creation warning:', notifErr.message);
+    }
 
     await connection.commit();
     connection.release();
