@@ -9,9 +9,9 @@ exports.getAllBookings = async (req, res) => {
 
     let query = `
       SELECT b.*, 
-             COALESCE(u.name, 'Guest Customer') as customer_name, 
-             COALESCE(u.email, 'guest@shaadipro.com') as customer_email, 
-             COALESCE(u.phone, 'N/A') as customer_phone, 
+             COALESCE(NULLIF(b.customer_name, ''), u.name, 'Guest Customer') as customer_name, 
+             COALESCE(NULLIF(b.customer_email, ''), u.email, 'guest@shaadipro.com') as customer_email, 
+             COALESCE(NULLIF(b.customer_phone, ''), u.phone, 'N/A') as customer_phone, 
              COALESCE(h.name, 'ShaadiPro Main Hall') as hall_name,
              COALESCE(h.price_per_event, 150000) as price_per_event,
              COALESCE(h.price_per_head, 1200) as price_per_head
@@ -24,8 +24,8 @@ exports.getAllBookings = async (req, res) => {
 
     // Strict customer isolation: customers only see their own bookings
     if (userRole === 'customer') {
-      query += ' AND b.customer_id = ?';
-      params.push(userId);
+      query += ' AND (b.customer_id = ? OR LOWER(b.customer_email) = LOWER(?))';
+      params.push(userId, req.user?.email || '');
     } else if (customer_id) {
       query += ' AND b.customer_id = ?';
       params.push(customer_id);
@@ -63,9 +63,9 @@ exports.getBookingById = async (req, res) => {
 
     const [bRows] = await pool.execute(`
       SELECT b.*, 
-             COALESCE(u.name, 'Guest Customer') as customer_name, 
-             COALESCE(u.email, 'guest@shaadipro.com') as customer_email, 
-             COALESCE(u.phone, 'N/A') as customer_phone, 
+             COALESCE(NULLIF(b.customer_name, ''), u.name, 'Guest Customer') as customer_name, 
+             COALESCE(NULLIF(b.customer_email, ''), u.email, 'guest@shaadipro.com') as customer_email, 
+             COALESCE(NULLIF(b.customer_phone, ''), u.phone, 'N/A') as customer_phone, 
              COALESCE(h.name, 'ShaadiPro Main Hall') as hall_name
       FROM bookings b
       LEFT JOIN users u ON b.customer_id = u.id
@@ -173,38 +173,44 @@ exports.createBooking = async (req, res) => {
     }
 
     // ── Resolve Customer ──────────────────────────────────────────────
-    let customerId = req.user?.id || null;
+    let customerId = null;
+    const isCustomerRole = req.user?.role === 'customer';
 
-    if (!customerId && customer_email) {
-      try {
+    if (isCustomerRole) {
+      customerId = req.user.id;
+    } else {
+      // If admin/owner/manager is creating a booking for a client:
+      if (customer_email) {
         const [uRows] = await pool.execute('SELECT id FROM users WHERE email = ? LIMIT 1', [customer_email]);
-        if (uRows.length > 0) {
-          customerId = uRows[0].id;
-        } else {
-          const guestName = customer_name || 'Guest Inquiry';
-          const guestEmail = customer_email;
-          const guestPhone = customer_phone || null;
+        if (uRows.length > 0) customerId = uRows[0].id;
+      }
+      if (!customerId && customer_phone) {
+        const [uRows] = await pool.execute('SELECT id FROM users WHERE phone = ? LIMIT 1', [customer_phone]);
+        if (uRows.length > 0) customerId = uRows[0].id;
+      }
+
+      // If customer is not found in users table, auto-create a user record
+      if (!customerId && (customer_name || customer_email || customer_phone)) {
+        try {
+          const cName = customer_name || 'Guest Customer';
+          const cEmail = customer_email || `customer_${Date.now()}@shaadipro.com`;
+          const cPhone = customer_phone || null;
           const bcrypt = require('bcryptjs');
-          const guestHash = await bcrypt.hash(`guest_${Date.now()}`, 8);
+          const guestHash = await bcrypt.hash(`cust_${Date.now()}`, 8);
           const [newUser] = await pool.execute(
             'INSERT INTO users (name, email, phone, password_hash, status) VALUES (?, ?, ?, ?, ?)',
-            [guestName, guestEmail, guestPhone, guestHash, 'active']
+            [cName, cEmail, cPhone, guestHash, 'active']
           );
           customerId = newUser.insertId;
           try {
             await pool.execute('INSERT INTO user_groups (user_id, group_id) VALUES (?, 5)', [customerId]);
           } catch (_) {}
-        }
-      } catch (userErr) {
-        console.warn('Customer resolution warning:', userErr.message);
+        } catch (_) {}
       }
-    }
 
-    if (!customerId) {
-      try {
-        const [anyUser] = await pool.execute('SELECT id FROM users ORDER BY id ASC LIMIT 1');
-        customerId = anyUser.length > 0 ? anyUser[0].id : 1;
-      } catch (_) { customerId = 1; }
+      if (!customerId) {
+        customerId = req.user?.id || 1;
+      }
     }
 
     // ── Begin Transaction ─────────────────────────────────────────────
@@ -212,9 +218,21 @@ exports.createBooking = async (req, res) => {
     await connection.beginTransaction();
 
     const [bRes] = await connection.execute(
-      `INSERT INTO bookings (customer_id, hall_id, hall_slot_id, event_type, event_date, guest_count_estimated, status, created_by, total_amount)
-       VALUES (?, ?, NULL, ?, ?, ?, ?, ?, 0)`,
-      [customerId, resolvedHallId, event_type, event_date, guests, 'inquiry', customerId]
+      `INSERT INTO bookings
+       (customer_id, hall_id, hall_slot_id, event_type, event_date, guest_count_estimated, status, created_by, total_amount, customer_name, customer_phone, customer_email)
+       VALUES (?, ?, NULL, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
+      [
+        customerId,
+        resolvedHallId,
+        event_type,
+        event_date,
+        guests,
+        'inquiry',
+        req.user?.id || 1,
+        customer_name || null,
+        customer_phone || null,
+        customer_email || null
+      ]
     );
 
     const dbBookingId = bRes.insertId;

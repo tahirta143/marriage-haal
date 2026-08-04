@@ -66,16 +66,24 @@ export default function VendorDetailClientView({ vendorId }) {
     }
   }, [vendorId]);
 
+  const [vendorPackages, setVendorPackages] = useState([]);
+
   const fetchVendorDetail = async () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await api.get(/vendors/);
+      const res = await api.get(`/vendors/${vendorId}`);
       if (res.data.success && res.data.vendor) {
         setVendor(res.data.vendor);
         const services = res.data.subServices || [];
+        const pkgs = res.data.packages || [];
         setSubServices(services);
-        if (services.length > 0) setSelectedService(services[0]);
+        setVendorPackages(pkgs);
+        if (pkgs.length > 0) {
+          setSelectedService(pkgs[0]);
+        } else if (services.length > 0) {
+          setSelectedService(services[0]);
+        }
         setLoading(false);
         return;
       }
@@ -102,7 +110,7 @@ export default function VendorDetailClientView({ vendorId }) {
 
         if (match.category_id) {
           try {
-            const ssRes = await api.get(/categories//sub-services);
+            const ssRes = await api.get(`/categories/${match.category_id}/sub-services`);
             if (ssRes.data.success) {
               const services = ssRes.data.subServices || [];
               setSubServices(services);
@@ -142,6 +150,25 @@ export default function VendorDetailClientView({ vendorId }) {
       setFeedback('');
       setInquiryError('');
 
+      const selectedDateFormatted = eventDate || `2026-07-${selectedDay < 10 ? '0' + selectedDay : selectedDay}`;
+      const phoneNum = custPhone || user.phone || '+92 300 1234567';
+
+      // 1. Submit to Vendor Portal Inbox
+      if (vendor?.id) {
+        try {
+          await api.post(`/vendors/${vendor.id}/inquiry`, {
+            customer_name: user.name,
+            customer_phone: phoneNum,
+            customer_email: user.email,
+            event_function: eventFunction,
+            event_date: selectedDateFormatted,
+            guest_count: parseInt(guestCount) || 100,
+            message: `Interested in ${selectedService?.name || vendor.business_name} package for ${eventFunction}.`
+          });
+        } catch (_) {}
+      }
+
+      // 2. Submit to central bookings desk
       let hallId = 1;
       try {
         const hallRes = await api.get('/halls');
@@ -150,14 +177,12 @@ export default function VendorDetailClientView({ vendorId }) {
         }
       } catch (_) {}
 
-      const selectedDateFormatted = `2026-07-${selectedDay < 10 ? '0' + selectedDay : selectedDay}`;
-
       const payload = {
         hall_id: hallId,
         event_type: eventFunction,
-        event_date: eventDate || selectedDateFormatted,
+        event_date: selectedDateFormatted,
         guest_count: parseInt(guestCount) || 100,
-        customer_phone: custPhone || user.phone || '+92 300 1234567',
+        customer_phone: phoneNum,
         customer_name: user.name,
         customer_email: user.email,
         selected_services: selectedService ? [{
@@ -172,9 +197,9 @@ export default function VendorDetailClientView({ vendorId }) {
       const res = await api.post('/bookings', payload);
       if (res.data.success) {
         setFeedback(
-          `✅ Inquiry #${res.data.bookingId} submitted for ${vendor?.business_name || 'Vendor'}! Team will contact you at ${payload.customer_phone}.`
+          `✅ Availability inquiry submitted for ${vendor?.business_name || 'Vendor'}! The vendor will review your requested date and call you at ${phoneNum}.`
         );
-        setTimeout(() => setQuoteModalOpen(false), 3500);
+        setTimeout(() => setQuoteModalOpen(false), 3000);
       } else {
         setInquiryError(res.data.message || 'Failed to submit inquiry.');
       }

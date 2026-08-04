@@ -19,6 +19,8 @@ import {
   CheckCircle2,
   Upload,
   X,
+  PlusCircle,
+  FolderPlus
 } from 'lucide-react';
 
 const CATEGORY_ICONS = {
@@ -35,7 +37,14 @@ export default function CategoriesPage() {
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState('');
 
-  // Modal State for Package Add / Edit
+  // Category Modal State (Add / Edit)
+  const [showCatModal, setShowCatModal] = useState(false);
+  const [editingCatId, setEditingCatId] = useState(null);
+  const [catName, setCatName] = useState('');
+  const [catPricingType, setCatPricingType] = useState('fixed');
+  const [catImageUrl, setCatImageUrl] = useState('');
+
+  // Package Modal State (Add / Edit)
   const [showPkgModal, setShowPkgModal] = useState(false);
   const [editingPkgId, setEditingPkgId] = useState(null);
   const [selectedCatId, setSelectedCatId] = useState(null);
@@ -45,9 +54,20 @@ export default function CategoriesPage() {
   const [pkgImageUrl, setPkgImageUrl] = useState('');
   const [uploading, setUploading] = useState(false);
 
+  // Sub-Service Modal State (Add / Edit)
+  const [showSubModal, setShowSubModal] = useState(false);
+  const [subName, setSubName] = useState('');
+  const [subPrice, setSubPrice] = useState('');
+  const [subDesc, setSubDesc] = useState('');
+
   useEffect(() => {
     fetchCategories();
   }, []);
+
+  const showSuccess = (msg) => {
+    setFeedback(msg);
+    setTimeout(() => setFeedback(''), 4000);
+  };
 
   const fetchCategories = async () => {
     try {
@@ -63,7 +83,7 @@ export default function CategoriesPage() {
     }
   };
 
-  const handleFileUpload = async (e) => {
+  const handleFileUpload = async (e, setUrl) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -76,7 +96,7 @@ export default function CategoriesPage() {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       if (res.data.success) {
-        setPkgImageUrl(`http://localhost:5000${res.data.imageUrl}`);
+        setUrl(`http://localhost:5000${res.data.imageUrl}`);
       }
     } catch (err) {
       alert('Failed to upload image');
@@ -85,6 +105,106 @@ export default function CategoriesPage() {
     }
   };
 
+  // CATEGORY HANDLERS
+  const openNewCategoryModal = () => {
+    setEditingCatId(null);
+    setCatName('');
+    setCatPricingType('fixed');
+    setCatImageUrl('');
+    setShowCatModal(true);
+  };
+
+  const openEditCategoryModal = (cat) => {
+    setEditingCatId(cat.id);
+    setCatName(cat.name);
+    setCatPricingType(cat.pricing_type || 'fixed');
+    setCatImageUrl(cat.image_url || '');
+    setShowCatModal(true);
+  };
+
+  const handleSaveCategory = async (e) => {
+    e.preventDefault();
+    if (!catName) return;
+
+    try {
+      if (editingCatId) {
+        const res = await api.put(`/categories/${editingCatId}`, {
+          name: catName,
+          pricing_type: catPricingType,
+          image_url: catImageUrl,
+        });
+        if (res.data.success) showSuccess(`Category '${catName}' updated.`);
+      } else {
+        const res = await api.post('/categories', {
+          name: catName,
+          pricing_type: catPricingType,
+          image_url: catImageUrl,
+        });
+        if (res.data.success) showSuccess(`Category '${catName}' created.`);
+      }
+      setShowCatModal(false);
+      fetchCategories();
+    } catch (err) {
+      alert('Failed to save category');
+    }
+  };
+
+  const handleDeleteCategory = async (catId, name) => {
+    if (!confirm(`Are you sure you want to delete category '${name}'? This will also remove associated packages.`)) return;
+    try {
+      const res = await api.delete(`/categories/${catId}`);
+      if (res.data.success) {
+        showSuccess(`Category '${name}' deleted.`);
+        fetchCategories();
+      }
+    } catch (err) {
+      alert('Failed to delete category');
+    }
+  };
+
+  // SUB-SERVICES HANDLERS
+  const openNewSubServiceModal = (catId) => {
+    setSelectedCatId(catId);
+    setSubName('');
+    setSubPrice('');
+    setSubDesc('');
+    setShowSubModal(true);
+  };
+
+  const handleSaveSubService = async (e) => {
+    e.preventDefault();
+    if (!selectedCatId || !subName) return;
+
+    try {
+      const res = await api.post(`/categories/${selectedCatId}/sub-services`, {
+        name: subName,
+        price: parseFloat(subPrice || 15000),
+        description: subDesc,
+      });
+      if (res.data.success) {
+        showSuccess(`Sub-service '${subName}' added.`);
+        setShowSubModal(false);
+        fetchCategories();
+      }
+    } catch (err) {
+      alert('Failed to add sub-service');
+    }
+  };
+
+  const handleDeleteSubService = async (subId) => {
+    if (!confirm('Are you sure you want to delete this sub-service tag?')) return;
+    try {
+      const res = await api.delete(`/categories/sub-services/${subId}`);
+      if (res.data.success) {
+        showSuccess('Sub-service tag deleted.');
+        fetchCategories();
+      }
+    } catch (err) {
+      alert('Failed to delete sub-service');
+    }
+  };
+
+  // PACKAGE HANDLERS
   const openCreateModal = (catId) => {
     setEditingPkgId(null);
     setSelectedCatId(catId);
@@ -117,7 +237,6 @@ export default function CategoriesPage() {
         .filter(Boolean);
 
       if (editingPkgId) {
-        // Update package in MySQL
         const res = await api.put(`/categories/packages/${editingPkgId}`, {
           name: pkgName,
           price: parseFloat(pkgPrice),
@@ -125,11 +244,8 @@ export default function CategoriesPage() {
           image_url: pkgImageUrl,
         });
 
-        if (res.data.success) {
-          setFeedback(`Package '${pkgName}' updated successfully.`);
-        }
+        if (res.data.success) showSuccess(`Package '${pkgName}' updated.`);
       } else {
-        // Create package in MySQL
         const res = await api.post(`/categories/${selectedCatId}/packages`, {
           name: pkgName,
           price: parseFloat(pkgPrice),
@@ -137,9 +253,7 @@ export default function CategoriesPage() {
           image_url: pkgImageUrl,
         });
 
-        if (res.data.success) {
-          setFeedback(`Package '${pkgName}' created successfully.`);
-        }
+        if (res.data.success) showSuccess(`Package '${pkgName}' created.`);
       }
 
       setShowPkgModal(false);
@@ -154,7 +268,7 @@ export default function CategoriesPage() {
     try {
       const res = await api.delete(`/categories/packages/${packageId}`);
       if (res.data.success) {
-        setFeedback('Package deleted from database.');
+        showSuccess('Package deleted from database.');
         fetchCategories();
       }
     } catch (err) {
@@ -168,7 +282,7 @@ export default function CategoriesPage() {
       fallback={
         <div className="p-8 text-center text-rose-600 font-bold flex items-center justify-center gap-2 bg-white border border-[#F0D5E2] rounded-2xl shadow-sm">
           <ShieldAlert className="w-6 h-6" />
-          Access Denied: Missing 'category.manage' permission.
+          Access Denied: Missing &apos;category.manage&apos; permission.
         </div>
       }
     >
@@ -178,15 +292,23 @@ export default function CategoriesPage() {
           <div>
             <div className="flex items-center gap-2 text-[#AA336A] text-xs font-bold uppercase tracking-wider mb-1">
               <Sparkles className="w-4 h-4" />
-              Service Catalog & Pricing Structure
+              Service Catalog &amp; Pricing Structure
             </div>
             <h1 className="text-2xl font-extrabold font-serif-title text-[#22131A]">
-              Services & Package Management (Add, Edit, Update, Delete)
+              Service Categories &amp; Package Management
             </h1>
             <p className="text-[#705562] text-xs mt-1 font-medium">
-              Direct MySQL database integration to manage Food & Catering, Stage Decor, Photography, Makeup, and DJ packages.
+              Create and manage Service Categories, Sub-service offering tags, and Base Pricing Packages.
             </p>
           </div>
+
+          <button
+            onClick={openNewCategoryModal}
+            className="px-4 py-2.5 rounded-xl bg-[#AA336A] hover:bg-[#8E2656] text-white font-bold text-xs flex items-center gap-2 shadow-md self-start sm:self-auto"
+          >
+            <FolderPlus className="w-4 h-4" />
+            + Add New Category
+          </button>
         </div>
 
         {feedback && (
@@ -199,7 +321,7 @@ export default function CategoriesPage() {
         {/* Categories List */}
         {loading ? (
           <div className="text-center py-12 text-[#705562] text-sm font-semibold">
-            Loading database service packages...
+            Loading database service categories...
           </div>
         ) : (
           <div className="space-y-8">
@@ -224,21 +346,73 @@ export default function CategoriesPage() {
                         </div>
                       )}
                       <div>
-                        <h2 className="text-xl font-bold text-[#22131A]">{category.name}</h2>
+                        <div className="flex items-center gap-2">
+                          <h2 className="text-xl font-bold text-[#22131A]">{category.name}</h2>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => openEditCategoryModal(category)}
+                              className="p-1 text-gray-400 hover:text-[#AA336A]"
+                              title="Edit Category"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteCategory(category.id, category.name)}
+                              className="p-1 text-gray-400 hover:text-rose-600"
+                              title="Delete Category"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
                         <span className="text-xs text-[#AA336A] font-bold uppercase tracking-wider">
                           Pricing Model: {category.pricing_type}
                         </span>
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => openCreateModal(category.id)}
-                      className="px-3.5 py-2 rounded-xl bg-[#AA336A] hover:bg-[#8E2656] text-white font-bold text-xs flex items-center gap-1.5 self-start sm:self-auto shadow-md"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Add Package
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => openNewSubServiceModal(category.id)}
+                        className="px-3.5 py-2 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-[#AA336A] font-bold text-xs hover:bg-[#AA336A] hover:text-white transition-colors"
+                      >
+                        + Add Sub-Service Tag
+                      </button>
+                      <button
+                        onClick={() => openCreateModal(category.id)}
+                        className="px-3.5 py-2 rounded-xl bg-[#AA336A] hover:bg-[#8E2656] text-white font-bold text-xs flex items-center gap-1.5 shadow-md"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add Package
+                      </button>
+                    </div>
                   </div>
+
+                  {/* Sub-Services Tags */}
+                  {category.subServices && category.subServices.length > 0 && (
+                    <div className="p-4 rounded-2xl bg-[#FAF5F7] border border-[#F0D5E2] space-y-2">
+                      <span className="text-[10px] font-extrabold uppercase text-[#604453] tracking-wider block">
+                        Category Sub-Services / Offering Tags:
+                      </span>
+                      <div className="flex flex-wrap gap-2 text-xs">
+                        {category.subServices.map((sub) => (
+                          <span
+                            key={sub.id}
+                            className="px-3 py-1 rounded-xl bg-white border border-[#F0D5E2] text-[#22131A] font-extrabold text-xs flex items-center gap-1.5"
+                          >
+                            <Tag className="w-3 h-3 text-[#AA336A]" />
+                            <span>{sub.name}</span>
+                            <button
+                              onClick={() => handleDeleteSubService(sub.id)}
+                              className="text-gray-400 hover:text-rose-600 ml-1"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Package Cards Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -247,7 +421,6 @@ export default function CategoriesPage() {
                         key={pkg.id}
                         className="rounded-2xl bg-[#FAF5F7] border border-[#F0D5E2] overflow-hidden flex flex-col justify-between hover:border-[#AA336A]/40 transition-colors"
                       >
-                        {/* Package Thumbnail */}
                         {pkg.image_url && (
                           <div className="h-36 w-full overflow-hidden bg-white relative">
                             <img
@@ -286,7 +459,6 @@ export default function CategoriesPage() {
                             </span>
                           </div>
 
-                          {/* Inclusion Chips */}
                           <div className="space-y-1 pt-2 border-t border-[#F0D5E2]">
                             <div className="text-[10px] font-bold uppercase tracking-wider text-[#705562]">
                               Included Items:
@@ -312,10 +484,124 @@ export default function CategoriesPage() {
           </div>
         )}
 
+        {/* Modal: Add/Edit Category */}
+        {showCatModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#22131A]/40 backdrop-blur-md">
+            <div className="w-full max-w-md bg-white rounded-2xl p-6 border border-[#F0D5E2] shadow-xl space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[#F0D5E2]">
+                <h3 className="text-base font-bold text-[#22131A]">
+                  {editingCatId ? 'Edit Service Category' : 'Add New Service Category'}
+                </h3>
+                <button onClick={() => setShowCatModal(false)} className="p-1 rounded-lg text-[#705562]">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveCategory} className="space-y-4 text-[#22131A]">
+                <div>
+                  <label className="block text-xs font-bold text-[#604453] uppercase mb-1">Category Name</label>
+                  <input
+                    type="text"
+                    value={catName}
+                    onChange={(e) => setCatName(e.target.value)}
+                    placeholder="e.g. Vintage Car Rental"
+                    required
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#604453] uppercase mb-1">Pricing Model</label>
+                  <select
+                    value={catPricingType}
+                    onChange={(e) => setCatPricingType(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A]"
+                  >
+                    <option value="fixed">Fixed Price</option>
+                    <option value="per_head">Per Head / Per Plate</option>
+                    <option value="per_hour">Per Hour</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#604453] uppercase mb-1">Cover Image</label>
+                  <div className="space-y-2">
+                    <label className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-xs text-[#604453] cursor-pointer flex items-center justify-center gap-2 font-semibold">
+                      <Upload className="w-4 h-4 text-[#AA336A]" />
+                      <span>{uploading ? 'Uploading...' : 'Upload Image'}</span>
+                      <input type="file" onChange={(e) => handleFileUpload(e, setCatImageUrl)} accept="image/*" className="hidden" />
+                    </label>
+                    <input
+                      type="text"
+                      value={catImageUrl}
+                      onChange={(e) => setCatImageUrl(e.target.value)}
+                      placeholder="https://images.unsplash.com/..."
+                      className="w-full px-4 py-2 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-xs text-[#22131A]"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3 rounded-xl bg-[#AA336A] hover:bg-[#8E2656] text-white font-extrabold text-xs uppercase"
+                >
+                  {editingCatId ? 'Update Category' : 'Create Category'}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Modal: Add Sub-Service Tag */}
+        {showSubModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#22131A]/40 backdrop-blur-md">
+            <div className="w-full max-w-md bg-white rounded-2xl p-6 border border-[#F0D5E2] shadow-xl space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[#F0D5E2]">
+                <h3 className="text-base font-bold text-[#22131A]">Add Sub-Service Tag</h3>
+                <button onClick={() => setShowSubModal(false)} className="p-1 rounded-lg text-[#705562]">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveSubService} className="space-y-4 text-[#22131A]">
+                <div>
+                  <label className="block text-xs font-bold text-[#604453] uppercase mb-1">Sub-Service Tag Name</label>
+                  <input
+                    type="text"
+                    value={subName}
+                    onChange={(e) => setSubName(e.target.value)}
+                    placeholder="e.g. Mutton Karahi, 4K Drone Shoot, Airbrush Makeup"
+                    required
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#604453] uppercase mb-1">Estimated Price (PKR)</label>
+                  <input
+                    type="number"
+                    value={subPrice}
+                    onChange={(e) => setSubPrice(e.target.value)}
+                    placeholder="15000"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A]"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3 rounded-xl bg-[#AA336A] hover:bg-[#8E2656] text-white font-extrabold text-xs uppercase"
+                >
+                  Create Sub-Service Tag
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
         {/* Modal: Add or Edit Package */}
         {showPkgModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#22131A]/40 backdrop-blur-md">
-            <div className="w-full max-w-md bg-white rounded-2xl p-6 border border-[#F0D5E2] shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="w-full max-w-md bg-white rounded-2xl p-6 border border-[#F0D5E2] shadow-xl space-y-4 max-h-[90vh] overflow-y-auto text-[#22131A]">
               <div className="flex items-center justify-between pb-3 border-b border-[#F0D5E2]">
                 <h3 className="text-base font-bold text-[#22131A] flex items-center gap-2">
                   <Package className="w-4 h-4 text-[#AA336A]" />
@@ -371,7 +657,6 @@ export default function CategoriesPage() {
                   />
                 </div>
 
-                {/* Multer Image Upload Picker */}
                 <div>
                   <label className="block text-xs font-bold text-[#604453] uppercase mb-1">
                     Package Image Cover (Upload or URL)
@@ -380,7 +665,7 @@ export default function CategoriesPage() {
                     <label className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-xs text-[#604453] hover:border-[#AA336A] cursor-pointer flex items-center justify-center gap-2 font-semibold">
                       <Upload className="w-4 h-4 text-[#AA336A]" />
                       <span>{uploading ? 'Uploading...' : 'Upload Image File (Multer)'}</span>
-                      <input type="file" onChange={handleFileUpload} accept="image/*" className="hidden" />
+                      <input type="file" onChange={(e) => handleFileUpload(e, setPkgImageUrl)} accept="image/*" className="hidden" />
                     </label>
                     <input
                       type="text"

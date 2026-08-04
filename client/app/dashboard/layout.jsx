@@ -28,6 +28,7 @@ import {
   Search,
   ChevronDown,
   User,
+  Award,
   Settings,
 } from 'lucide-react';
 
@@ -249,6 +250,12 @@ export default function UnifiedDashboardLayout({ children }) {
           permission: PERMISSIONS.VENDOR_MANAGE,
         },
         {
+          label: 'My Vendor Portal',
+          href: '/dashboard/vendor-profile',
+          icon: Award,
+          permission: null,
+        },
+        {
           label: 'Task Assignments',
           href: '/dashboard/my-jobs',
           icon: Briefcase,
@@ -278,7 +285,7 @@ export default function UnifiedDashboardLayout({ children }) {
   return (
     <div className="h-screen w-screen overflow-hidden bg-white text-[#111827] flex flex-col md:flex-row">
       {/* Mobile Header */}
-      <div className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-[#E5E7EB] z-40 flex-shrink-0">
+      <div className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-[#E5E7EB] z-40 flex-shrink-0 print:hidden">
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded-xl bg-[#FAF5F7] text-[#AA336A]">
             <Sparkles className="w-5 h-5" />
@@ -297,13 +304,13 @@ export default function UnifiedDashboardLayout({ children }) {
       {sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/50 z-40 md:hidden print:hidden"
         />
       )}
 
       {/* Unified Desktop Sidebar */}
       <aside
-        className={`fixed md:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-[#E5E7EB] flex flex-col justify-between transition-transform duration-300 ${
+        className={`fixed md:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-[#E5E7EB] flex flex-col justify-between transition-transform duration-300 print:hidden ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
@@ -371,7 +378,7 @@ export default function UnifiedDashboardLayout({ children }) {
       {/* Main Content Column */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         {/* Top Navbar Workspace Header */}
-        <header className="h-16 bg-white border-b border-[#E5E7EB] px-6 flex items-center justify-between gap-4 flex-shrink-0 z-30">
+        <header className="h-16 bg-white border-b border-[#E5E7EB] px-6 flex items-center justify-between gap-4 flex-shrink-0 z-30 print:hidden">
           {/* Workspace Title & Live Search Bar */}
           <div className="flex items-center gap-4 flex-1 max-w-lg" ref={searchBoxRef}>
             <form onSubmit={handleDashboardSearchSubmit} className="relative w-full">
@@ -586,7 +593,7 @@ export default function UnifiedDashboardLayout({ children }) {
         </header>
 
         {/* Main Workspace Content (Independent Scroll) */}
-        <main className="flex-1 h-full overflow-y-auto p-6 md:p-8 bg-white">
+        <main className="flex-1 h-full overflow-y-auto p-6 md:p-8 bg-white print:p-0 print:m-0 print:overflow-visible print:h-auto print:bg-white">
           {children}
         </main>
       </div>

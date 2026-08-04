@@ -144,6 +144,13 @@ export default function VendorsPage() {
     }
   };
 
+  // Add Modal Extra State
+  const [vendorEmail, setVendorEmail] = useState('');
+  const [vendorPassword, setVendorPassword] = useState('');
+  const [vendorCity, setVendorCity] = useState('Lahore');
+  const [vendorPhone, setVendorPhone] = useState('');
+  const [createdCredentials, setCreatedCredentials] = useState(null);
+
   // ── CREATE ──────────────────────────────────────────────────────────
   const handleRegisterVendor = async (e) => {
     e.preventDefault();
@@ -160,16 +167,26 @@ export default function VendorsPage() {
         starting_price: parseFloat(startingPrice || 25000),
         image_url: imageUrl,
         gallery: galleryImages,
+        city: vendorCity,
+        phone: vendorPhone,
+        email: vendorEmail,
+        password: vendorPassword,
       });
 
       if (res.data.success) {
-        showFeedback(`Vendor partner '${businessName}' registered successfully.`);
+        if (res.data.loginCredentials) {
+          setCreatedCredentials(res.data.loginCredentials);
+        }
+        showFeedback(res.data.message || `Vendor partner '${businessName}' registered successfully.`);
         setShowModal(false);
         setBusinessName('');
         setCommission('10');
         setStartingPrice('25000');
         setImageUrl('');
         setGalleryImages([]);
+        setVendorEmail('');
+        setVendorPassword('');
+        setVendorPhone('');
         fetchData();
       }
     } catch (err) {
@@ -449,6 +466,64 @@ export default function VendorsPage() {
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-[#604453] uppercase mb-1">City</label>
+                    <select
+                      value={vendorCity}
+                      onChange={(e) => setVendorCity(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] focus:outline-none focus:border-[#AA336A]"
+                    >
+                      <option value="Lahore">Lahore</option>
+                      <option value="Islamabad">Islamabad</option>
+                      <option value="Rawalpindi">Rawalpindi</option>
+                      <option value="Karachi">Karachi</option>
+                      <option value="Faisalabad">Faisalabad</option>
+                      <option value="Multan">Multan</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#604453] uppercase mb-1">Contact Phone</label>
+                    <input
+                      type="text"
+                      value={vendorPhone}
+                      onChange={(e) => setVendorPhone(e.target.value)}
+                      placeholder="+92 300 1234567"
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A] focus:outline-none focus:border-[#AA336A]"
+                    />
+                  </div>
+                </div>
+
+                {/* Software User Login Account Generation */}
+                <div className="p-3 bg-[#FAF5F7] border border-[#F0D5E2] rounded-xl space-y-2">
+                  <span className="text-[11px] font-extrabold text-[#AA336A] uppercase block">
+                    Vendor Software Account (Auto-Created User)
+                  </span>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-[10px] font-bold text-[#604453] uppercase">Vendor Login Email</label>
+                      <input
+                        type="email"
+                        value={vendorEmail}
+                        onChange={(e) => setVendorEmail(e.target.value)}
+                        placeholder="vendor@example.com"
+                        className="w-full px-3 py-2 rounded-lg bg-white border border-[#F0D5E2] text-xs text-[#22131A]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-[#604453] uppercase">Vendor Login Password</label>
+                      <input
+                        type="text"
+                        value={vendorPassword}
+                        onChange={(e) => setVendorPassword(e.target.value)}
+                        placeholder="Leave blank for auto-generated password"
+                        className="w-full px-3 py-2 rounded-lg bg-white border border-[#F0D5E2] text-xs text-[#22131A]"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">

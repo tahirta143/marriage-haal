@@ -78,6 +78,21 @@ const initDatabaseAndMigrations = async () => {
       await conn.query(`ALTER TABLE bookings ADD COLUMN total_amount DECIMAL(12,2) DEFAULT 0.00`);
     } catch (mErr) {}
 
+    // Migration: Add customer_name column to bookings if missing
+    try {
+      await conn.query(`ALTER TABLE bookings ADD COLUMN customer_name VARCHAR(100) NULL`);
+    } catch (mErr) {}
+
+    // Migration: Add customer_phone column to bookings if missing
+    try {
+      await conn.query(`ALTER TABLE bookings ADD COLUMN customer_phone VARCHAR(50) NULL`);
+    } catch (mErr) {}
+
+    // Migration: Add customer_email column to bookings if missing
+    try {
+      await conn.query(`ALTER TABLE bookings ADD COLUMN customer_email VARCHAR(100) NULL`);
+    } catch (mErr) {}
+
     // Migration: Add city column to vendors if missing
     try {
       await conn.query(`ALTER TABLE vendors ADD COLUMN city VARCHAR(50) NOT NULL DEFAULT 'Lahore'`);
@@ -131,6 +146,58 @@ const initDatabaseAndMigrations = async () => {
           description TEXT,
           image_url VARCHAR(255) NULL,
           FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
+        );
+      `);
+    } catch (mErr) {}
+
+    // Migration: Add description, address, and phone columns to vendors if missing
+    try {
+      await conn.query(`ALTER TABLE vendors ADD COLUMN description TEXT NULL`);
+    } catch (mErr) {}
+
+    try {
+      await conn.query(`ALTER TABLE vendors ADD COLUMN address VARCHAR(255) NULL`);
+    } catch (mErr) {}
+
+    try {
+      await conn.query(`ALTER TABLE vendors ADD COLUMN phone VARCHAR(50) NULL`);
+    } catch (mErr) {}
+
+    // Migration: Ensure vendor_packages table exists
+    try {
+      await conn.query(`
+        CREATE TABLE IF NOT EXISTS vendor_packages (
+          id INT PRIMARY KEY AUTO_INCREMENT,
+          vendor_id INT NOT NULL,
+          name VARCHAR(150) NOT NULL,
+          price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+          pricing_type ENUM('fixed', 'per_head', 'per_hour') DEFAULT 'fixed',
+          description TEXT,
+          image_url VARCHAR(255) NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE CASCADE
+        );
+      `);
+    } catch (mErr) {}
+
+    // Migration: Ensure vendor_inquiries table exists
+    try {
+      await conn.query(`
+        CREATE TABLE IF NOT EXISTS vendor_inquiries (
+          id INT PRIMARY KEY AUTO_INCREMENT,
+          vendor_id INT NOT NULL,
+          customer_id INT NULL,
+          customer_name VARCHAR(100) NOT NULL,
+          customer_phone VARCHAR(50) NOT NULL,
+          customer_email VARCHAR(100) NULL,
+          event_function VARCHAR(100) DEFAULT 'Wedding Function',
+          event_date DATE NULL,
+          guest_count INT DEFAULT 100,
+          message TEXT NULL,
+          status ENUM('pending', 'contacted', 'accepted', 'rejected') DEFAULT 'pending',
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE CASCADE,
+          FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE SET NULL
         );
       `);
     } catch (mErr) {}

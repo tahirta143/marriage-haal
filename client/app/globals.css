@@ -85,3 +85,40 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #AA336A;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   PRINT MEDIA STYLES (Professional Document & Invoice Formatting)
+   ───────────────────────────────────────────────────────────────────────── */
+@media print {
+  /* Hide all layout wrappers, headers, sidebars, search bars, buttons, and user dropdowns */
+  header,
+  nav,
+  aside,
+  .no-print,
+  .print\:hidden,
+  button,
+  input[type="search"],
+  [role="navigation"] {
+    display: none !important;
+  }
+
+  /* Reset body & layout containers for printing */
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Force page width */
+  @page {
+    size: A4 portrait;
+    margin: 15mm 15mm 15mm 15mm;
+  }
+}
+
