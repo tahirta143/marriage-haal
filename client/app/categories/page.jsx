@@ -107,7 +107,7 @@ function CategoriesContent() {
   const filteredCategories = categories.filter((cat) => {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
-    const slug = CATEGORY_SLUGS[cat.name] || '';
+    const slug = cat.slug || CATEGORY_SLUGS[cat.name] || cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     return cat.name.toLowerCase().includes(q) || slug.toLowerCase().includes(q);
   });
 
@@ -173,9 +173,11 @@ function CategoriesContent() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {filteredCategories.map((cat) => {
-              const slug = CATEGORY_SLUGS[cat.name] || 'catering';
+              const slug = cat.slug || CATEGORY_SLUGS[cat.name] || cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
               const Icon = CATEGORY_ICONS[slug] || Sparkles;
               const coverImg = cat.image_url || CATEGORY_FALLBACK_IMAGES[slug] || CATEGORY_FALLBACK_IMAGES['decor'];
+              const subCount = cat.subServices ? cat.subServices.length : 0;
+              const pkgCount = (cat.packages || []).length;
 
               return (
                 <Link
@@ -192,16 +194,27 @@ function CategoriesContent() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                     <div className="absolute top-3 left-3 px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-white/90 text-[#22131A] shadow-sm flex items-center gap-1.5">
                       <Icon className="w-3.5 h-3.5 text-[#AA336A]" />
-                      {(cat.packages || []).length} Packages
+                      {subCount > 0 ? `${subCount} Sub-Services` : `${pkgCount} Packages`}
                     </div>
                     <div className="absolute bottom-3 left-3 text-white">
                       <h3 className="text-lg font-bold font-serif-title">{cat.name}</h3>
                     </div>
                   </div>
 
-                  <div className="p-4 bg-white flex items-center justify-between text-xs font-bold text-[#AA336A] group-hover:text-[#8E2656]">
-                    <span>Explore {cat.name} Vendors</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  <div className="p-4 bg-white space-y-3 flex-1 flex flex-col justify-between">
+                    {cat.subServices && cat.subServices.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {cat.subServices.slice(0, 3).map((sub) => (
+                          <span key={sub.id} className="px-2 py-0.5 rounded-md bg-[#AA336A]/10 text-[10px] font-bold text-[#AA336A]">
+                            {sub.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between text-xs font-bold text-[#AA336A] group-hover:text-[#8E2656]">
+                      <span>Explore {cat.name} Vendors</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </div>
                   </div>
                 </Link>
               );

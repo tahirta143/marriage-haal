@@ -24,7 +24,18 @@ initEventsTable();
 exports.getAllEvents = async (req, res) => {
   try {
     const [rows] = await pool.execute('SELECT * FROM events ORDER BY id ASC');
-    return res.status(200).json({ success: true, count: rows.length, events: rows });
+    let subEventsList = [];
+    try {
+      const [se] = await pool.execute('SELECT * FROM sub_events ORDER BY id ASC');
+      subEventsList = se;
+    } catch (_) {}
+
+    const events = rows.map(e => ({
+      ...e,
+      subEvents: subEventsList.filter(s => s.event_id === e.id)
+    }));
+
+    return res.status(200).json({ success: true, count: events.length, events });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Failed to fetch events from MySQL database', error: error.message });
   }
@@ -44,6 +55,57 @@ exports.getSubEvents = async (req, res) => {
   }
 };
 
+// POST /api/events/:id/sub-events - Create new child sub-event
+exports.createSubEvent = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description } = req.body;
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'Sub-event name is required' });
+    }
+
+    const [result] = await pool.execute(
+      'INSERT INTO sub_events (event_id, name, description) VALUES (?, ?, ?)',
+      [id, name, description || null]
+    );
+
+    return res.status(201).json({ success: true, subEventId: result.insertId, message: 'Sub-event created successfully' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to create sub-event', error: error.message });
+  }
+};
+
+// PUT /api/events/sub-events/:subId - Update sub-event
+exports.updateSubEvent = async (req, res) => {
+  try {
+    const { subId } = req.params;
+    const { name, description } = req.body;
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'Sub-event name is required' });
+    }
+
+    await pool.execute(
+      'UPDATE sub_events SET name = ?, description = ? WHERE id = ?',
+      [name, description || null, subId]
+    );
+
+    return res.status(200).json({ success: true, message: 'Sub-event updated successfully' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to update sub-event', error: error.message });
+  }
+};
+
+// DELETE /api/events/sub-events/:subId - Delete sub-event
+exports.deleteSubEvent = async (req, res) => {
+  try {
+    const { subId } = req.params;
+    await pool.execute('DELETE FROM sub_events WHERE id = ?', [subId]);
+    return res.status(200).json({ success: true, message: 'Sub-event deleted successfully' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to delete sub-event', error: error.message });
+  }
+};
+
 // GET /api/events/:id - Get single event function
 exports.getEventById = async (req, res) => {
   try {
@@ -52,7 +114,14 @@ exports.getEventById = async (req, res) => {
     if (rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Event function not found' });
     }
-    return res.status(200).json({ success: true, event: rows[0] });
+
+    let subEvents = [];
+    try {
+      const [se] = await pool.execute('SELECT * FROM sub_events WHERE event_id = ? ORDER BY id ASC', [rows[0].id]);
+      subEvents = se;
+    } catch (_) {}
+
+    return res.status(200).json({ success: true, event: { ...rows[0], subEvents } });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Database error', error: error.message });
   }

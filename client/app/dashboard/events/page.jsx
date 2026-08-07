@@ -143,6 +143,71 @@ export default function EventsManagementPage() {
     }
   };
 
+  // Sub-Event Modal State
+  const [showSubModal, setShowSubModal] = useState(false);
+  const [selectedEventId, setSelectedEventId] = useState(null);
+  const [editingSubId, setEditingSubId] = useState(null);
+  const [subName, setSubName] = useState('');
+  const [subDesc, setSubDesc] = useState('');
+
+  const openAddSubModal = (evtId) => {
+    setSelectedEventId(evtId);
+    setEditingSubId(null);
+    setSubName('');
+    setSubDesc('');
+    setShowSubModal(true);
+  };
+
+  const openEditSubModal = (evtId, sub) => {
+    setSelectedEventId(evtId);
+    setEditingSubId(sub.id);
+    setSubName(sub.name);
+    setSubDesc(sub.description || '');
+    setShowSubModal(true);
+  };
+
+  const handleSaveSubEvent = async (e) => {
+    e.preventDefault();
+    if (!subName) return;
+
+    try {
+      if (editingSubId) {
+        const res = await api.put(`/events/sub-events/${editingSubId}`, {
+          name: subName,
+          description: subDesc,
+        });
+        if (res.data.success) {
+          setFeedback(`Sub-event '${subName}' updated.`);
+        }
+      } else {
+        const res = await api.post(`/events/${selectedEventId}/sub-events`, {
+          name: subName,
+          description: subDesc,
+        });
+        if (res.data.success) {
+          setFeedback(`Sub-event '${subName}' added.`);
+        }
+      }
+      setShowSubModal(false);
+      fetchEvents();
+    } catch (err) {
+      alert('Failed to save sub-event');
+    }
+  };
+
+  const handleDeleteSubEvent = async (subId) => {
+    if (!confirm('Are you sure you want to delete this sub-event?')) return;
+    try {
+      const res = await api.delete(`/events/sub-events/${subId}`);
+      if (res.data.success) {
+        setFeedback('Sub-event deleted.');
+        fetchEvents();
+      }
+    } catch (err) {
+      alert('Failed to delete sub-event');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -153,10 +218,10 @@ export default function EventsManagementPage() {
             MySQL Event Functions & Packages Table
           </div>
           <h1 className="text-2xl font-extrabold font-serif-title text-[#22131A]">
-            Event Functions Management (Add, Edit, Update, Delete)
+            Event Functions & Sub-Events Management
           </h1>
           <p className="text-[#705562] text-xs mt-1 font-medium">
-            Directly connected to XAMPP MySQL 'events' table for Barat, Mehndi, Walima, Nikkah, Bridal Shower, Qawali Night, and Engagement.
+            Manage main event functions and nested sub-events (dholki, sangeet, qawali, rings ceremony) directly in MySQL.
           </p>
         </div>
 
@@ -218,11 +283,63 @@ export default function EventsManagementPage() {
                   </div>
                 </div>
 
-                <div className="p-5 space-y-2">
-                  <h3 className="text-lg font-bold font-serif-title text-[#22131A]">{evt.name}</h3>
-                  <p className="text-xs text-[#705562] leading-relaxed font-normal">
-                    {evt.description || evt.desc}
-                  </p>
+                <div className="p-5 space-y-4">
+                  <div className="space-y-1">
+                    <h3 className="text-lg font-bold font-serif-title text-[#22131A]">{evt.name}</h3>
+                    <p className="text-xs text-[#705562] leading-relaxed font-normal">
+                      {evt.description || evt.desc}
+                    </p>
+                  </div>
+
+                  {/* Sub-Events List */}
+                  <div className="pt-3 border-t border-[#F0D5E2] space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-[#AA336A] uppercase tracking-wider">
+                        Sub-Events ({evt.subEvents ? evt.subEvents.length : 0})
+                      </span>
+                      <button
+                        onClick={() => openAddSubModal(evt.id)}
+                        className="text-[10px] font-bold text-[#AA336A] hover:underline flex items-center gap-1"
+                      >
+                        <Plus className="w-3 h-3" />
+                        Add Sub-Event
+                      </button>
+                    </div>
+
+                    {evt.subEvents && evt.subEvents.length > 0 ? (
+                      <div className="space-y-1.5">
+                        {evt.subEvents.map((sub) => (
+                          <div
+                            key={sub.id}
+                            className="p-2 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] flex items-center justify-between text-xs"
+                          >
+                            <div>
+                              <p className="font-bold text-[#22131A]">{sub.name}</p>
+                              {sub.description && (
+                                <p className="text-[10px] text-[#705562]">{sub.description}</p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => openEditSubModal(evt.id, sub)}
+                                className="p-1 text-[#705562] hover:text-[#AA336A]"
+                              >
+                                <Edit2 className="w-3 h-3" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteSubEvent(sub.id)}
+                                className="p-1 text-[#9E7D8C] hover:text-rose-600"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-[#9E7D8C] italic">No sub-events added yet.</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -313,6 +430,61 @@ export default function EventsManagementPage() {
                 </button>
                 <button type="submit" className="px-5 py-2.5 rounded-xl bg-[#AA336A] text-[#FFFFFF] font-bold text-xs shadow-md">
                   {editingId ? 'Update Event' : 'Add Event'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Create / Edit Sub-Event */}
+      {showSubModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#22131A]/40 backdrop-blur-md">
+          <div className="w-full max-w-md bg-white rounded-2xl p-6 border border-[#F0D5E2] shadow-xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#F0D5E2]">
+              <h3 className="text-base font-bold text-[#22131A] flex items-center gap-2">
+                <Plus className="w-4 h-4 text-[#AA336A]" />
+                {editingSubId ? 'Edit Sub-Event' : 'Add New Sub-Event'}
+              </h3>
+              <button onClick={() => setShowSubModal(false)} className="p-1 rounded-lg text-[#705562] hover:text-[#22131A]">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveSubEvent} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-[#604453] uppercase mb-1">
+                  Sub-Event Name
+                </label>
+                <input
+                  type="text"
+                  value={subName}
+                  onChange={(e) => setSubName(e.target.value)}
+                  placeholder="e.g. Traditional Dholki"
+                  required
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#604453] uppercase mb-1">
+                  Sub-Event Description (Optional)
+                </label>
+                <textarea
+                  rows="2"
+                  value={subDesc}
+                  onChange={(e) => setSubDesc(e.target.value)}
+                  placeholder="Details about acoustic setup, guest seating, etc."
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-sm text-[#22131A]"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#F0D5E2]">
+                <button type="button" onClick={() => setShowSubModal(false)} className="px-4 py-2 text-xs font-semibold text-[#705562]">
+                  Cancel
+                </button>
+                <button type="submit" className="px-5 py-2.5 rounded-xl bg-[#AA336A] text-[#FFFFFF] font-bold text-xs shadow-md">
+                  {editingSubId ? 'Update Sub-Event' : 'Add Sub-Event'}
                 </button>
               </div>
             </form>

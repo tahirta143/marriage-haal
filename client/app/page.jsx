@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import api from '../lib/api';
 import MarketplaceHeader from '../components/MarketplaceHeader';
 import {
   Sparkles,
@@ -60,7 +61,45 @@ const HERO_VIDEOS = [
   },
 ];
 
-const VENDOR_MODULES = [
+const CATEGORY_SLUGS = {
+  'Food & Catering': 'catering',
+  'Catering': 'catering',
+  'Stage & Theme Decor': 'decor',
+  'Decor & Stage Setup': 'decor',
+  'Decor': 'decor',
+  'Bridal Makeup Artists': 'bridal-makeup',
+  'Bridal Makeup': 'bridal-makeup',
+  'Henna & Mehndi Artists': 'henna-artists',
+  'Mehndi Artist': 'henna-artists',
+  'DJ & Concert Sound Systems': 'dj-sound-system',
+  'DJ & Sound System': 'dj-sound-system',
+  'Photographers & Videographers': 'photographers',
+  'Photography & Videography': 'photographers',
+  'Luxury Wedding Car Rental': 'car-rental',
+  'Car Rental': 'car-rental',
+  'Invitation Cards & Stationery': 'stationery',
+  'Wedding Stationery': 'stationery',
+};
+
+const ICON_MAP = {
+  'photographers': Camera,
+  'bridal-makeup': Sparkle,
+  'catering': Utensils,
+  'decor': Paintbrush,
+  'henna-artists': Sparkle,
+  'car-rental': Car,
+  'stationery': FileText,
+  'dj-sound-system': Music,
+  'barat-planning': Crown,
+  'mehndi-mayo': Flame,
+  'walima-reception': Gem,
+  'bridal-shower': Heart,
+  'engagement': Gem,
+  'nikkah': Award,
+  'qawali-night': Music,
+};
+
+const INITIAL_VENDOR_MODULES = [
   {
     title: 'Photographers & Videographers',
     slug: 'photographers',
@@ -180,7 +219,7 @@ const VENUE_MODULES = [
   },
 ];
 
-const EVENT_MODULES = [
+const INITIAL_EVENT_MODULES = [
   {
     title: 'Barat Planning',
     slug: 'barat-planning',
@@ -232,13 +271,175 @@ const EVENT_MODULES = [
   },
 ];
 
+const VENUE_TYPE_TITLES = {
+  ballroom: 'Grand Ballrooms',
+  marquee: 'Royal Marquees',
+  lawn: 'Open Lawns & Gardens',
+  farmhouse: 'Luxury Farmhouses',
+  rooftop: 'Rooftop & Outdoor Spaces',
+  banquet: 'Banquet Halls & Restaurants',
+  hall: 'Wedding Halls & Banquets',
+};
+
+const VENUE_FALLBACK_IMAGES = {
+  ballroom: 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=800&q=80',
+  marquee: 'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=800&q=80',
+  lawn: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80',
+  farmhouse: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=800&q=80',
+  rooftop: 'https://images.unsplash.com/photo-1545232979-fbfd42e20068?auto=format&fit=crop&w=800&q=80',
+  banquet: 'https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&w=800&q=80',
+};
+
+const INITIAL_VENUE_MODULES = [
+  {
+    title: 'Grand Ballrooms',
+    type: 'ballroom',
+    image: 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=800&q=80',
+    capacity: '300 - 1500 Guests',
+    desc: 'Fully air-conditioned luxury indoor halls with chandelier lighting & stage.',
+  },
+  {
+    title: 'Royal Marquees',
+    type: 'marquee',
+    image: 'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=800&q=80',
+    capacity: '200 - 1000 Guests',
+    desc: 'High-ceiling carpeted marquees with segregated guest seating & valet.',
+  },
+  {
+    title: 'Open Lawns & Gardens',
+    type: 'lawn',
+    image: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80',
+    capacity: '150 - 800 Guests',
+    desc: 'Open air lush green wedding lawns for night events with fairy lights.',
+  },
+  {
+    title: 'Luxury Farmhouses',
+    type: 'farmhouse',
+    image: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=800&q=80',
+    capacity: '100 - 500 Guests',
+    desc: 'Private estate farmhouses with pool decks, lawns & VIP suites.',
+  },
+  {
+    title: 'Rooftop & Outdoor Spaces',
+    type: 'rooftop',
+    image: 'https://images.unsplash.com/photo-1545232979-fbfd42e20068?auto=format&fit=crop&w=800&q=80',
+    capacity: '80 - 300 Guests',
+    desc: 'Skyline rooftop venues offering panoramic city views for intimate events.',
+  },
+  {
+    title: 'Banquet Halls & Restaurants',
+    type: 'banquet',
+    image: 'https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&w=800&q=80',
+    capacity: '50 - 300 Guests',
+    desc: 'Air-conditioned banquet dining halls ideal for Nikkah & Engagement functions.',
+  },
+];
+
 export default function ModularHomePage() {
   const [selectedCity, setSelectedCity] = useState('Lahore');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeVideo, setActiveVideo] = useState(HERO_VIDEOS[0]);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
+  const [vendorModules, setVendorModules] = useState(INITIAL_VENDOR_MODULES);
+  const [venueModules, setVenueModules] = useState(INITIAL_VENUE_MODULES);
+  const [eventModules, setEventModules] = useState(INITIAL_EVENT_MODULES);
   const videoRef = useRef(null);
+
+  useEffect(() => {
+    fetchDynamicData();
+  }, []);
+
+  const fetchDynamicData = async () => {
+    try {
+      const [catRes, evtRes, hallRes] = await Promise.all([
+        api.get('/categories').catch(() => null),
+        api.get('/events').catch(() => null),
+        api.get('/halls').catch(() => null),
+      ]);
+
+      if (catRes?.data?.success && Array.isArray(catRes.data.categories) && catRes.data.categories.length > 0) {
+        const mappedCats = catRes.data.categories.map((cat) => {
+          const slug = cat.slug || CATEGORY_SLUGS[cat.name] || cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+          const Icon = ICON_MAP[slug] || Sparkles;
+          const subCount = cat.subServices ? cat.subServices.length : 0;
+          const pkgCount = cat.packages ? cat.packages.length : 0;
+
+          let countStr = `${pkgCount} Packages`;
+          if (subCount > 0) {
+            countStr = `${subCount} Sub-Services • ${pkgCount} Packages`;
+          } else if (pkgCount === 0) {
+            countStr = 'Verified Vendors';
+          }
+
+          let startingPrice = 'Custom Rates';
+          if (cat.pricing_type === 'per_head') startingPrice = 'PKR 1,500 / guest';
+          else if (cat.pricing_type === 'per_hour') startingPrice = 'PKR 15,000 / hr';
+          else if (cat.pricing_type === 'fixed') startingPrice = 'PKR 25,000';
+
+          return {
+            id: cat.id,
+            title: cat.name,
+            slug,
+            icon: Icon,
+            image: cat.image_url || 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=800&q=80',
+            count: countStr,
+            startingPrice,
+            desc: cat.description || `Explore verified ${cat.name} vendors, package rates, and photo galleries.`,
+            subServices: cat.subServices || [],
+          };
+        });
+        setVendorModules(mappedCats);
+      }
+
+      if (evtRes?.data?.success && Array.isArray(evtRes.data.events) && evtRes.data.events.length > 0) {
+        const mappedEvts = evtRes.data.events.map((evt) => {
+          const slug = evt.slug || evt.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+          const Icon = ICON_MAP[slug] || Calendar;
+          return {
+            id: evt.id,
+            title: evt.name,
+            slug,
+            icon: Icon,
+            image: evt.image_url || 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80',
+            desc: evt.description || `Curated wedding packages and vendor setups for ${evt.name}.`,
+            subEvents: evt.subEvents || [],
+          };
+        });
+        setEventModules(mappedEvts);
+      }
+
+      if (hallRes?.data?.success && Array.isArray(hallRes.data.halls) && hallRes.data.halls.length > 0) {
+        const halls = hallRes.data.halls;
+        const grouped = {};
+        halls.forEach((h) => {
+          const vType = (h.venue_type || 'ballroom').toLowerCase();
+          if (!grouped[vType]) grouped[vType] = [];
+          grouped[vType].push(h);
+        });
+
+        const mappedVenues = Object.keys(grouped).map((vType) => {
+          const list = grouped[vType];
+          const first = list[0];
+          const minCap = Math.min(...list.map((h) => h.capacity_min || 100));
+          const maxCap = Math.max(...list.map((h) => h.capacity_max || 1000));
+          const names = list.map((h) => h.name).slice(0, 2).join(', ');
+
+          return {
+            title: VENUE_TYPE_TITLES[vType] || `${vType.toUpperCase()} Venues`,
+            type: vType,
+            image: first.image_url || VENUE_FALLBACK_IMAGES[vType] || 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=800&q=80',
+            capacity: `${minCap} - ${maxCap} Guests`,
+            desc: `${list.length} Verified ${list.length === 1 ? 'Venue' : 'Venues'} (${names}${list.length > 2 ? ' + more' : ''}) available.`,
+          };
+        });
+
+        setVenueModules(mappedVenues);
+      }
+    } catch (err) {
+      console.warn('Could not load dynamic home modules:', err);
+    }
+  };
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -373,7 +574,7 @@ export default function ModularHomePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {VENDOR_MODULES.filter(
+            {vendorModules.filter(
               (mod) =>
                 searchQuery === '' ||
                 mod.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -381,7 +582,7 @@ export default function ModularHomePage() {
               const Icon = mod.icon;
               return (
                 <Link
-                  key={mod.slug}
+                  key={mod.id || mod.slug}
                   href={`/categories/${mod.slug}`}
                   className="group relative rounded-3xl bg-white border border-[#F0D5E2] overflow-hidden shadow-sm hover:shadow-xl hover:border-[#AA336A] transition-all duration-300 flex flex-col justify-between"
                 >
@@ -409,9 +610,25 @@ export default function ModularHomePage() {
                   </div>
 
                   <div className="p-5 bg-white space-y-4 flex-1 flex flex-col justify-between">
-                    <p className="text-xs text-[#705562] font-medium leading-relaxed">
-                      {mod.desc}
-                    </p>
+                    <div className="space-y-2">
+                      <p className="text-xs text-[#705562] font-medium leading-relaxed">
+                        {mod.desc}
+                      </p>
+                      {mod.subServices && mod.subServices.length > 0 && (
+                        <div className="flex flex-wrap gap-1 pt-1">
+                          {mod.subServices.slice(0, 3).map((sub) => (
+                            <span key={sub.id} className="px-2 py-0.5 rounded-md bg-[#AA336A]/10 text-[10px] font-bold text-[#AA336A]">
+                              {sub.name}
+                            </span>
+                          ))}
+                          {mod.subServices.length > 3 && (
+                            <span className="px-1.5 py-0.5 rounded-md bg-gray-100 text-[10px] font-bold text-gray-500">
+                              +{mod.subServices.length - 3} more
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
 
                     <div className="pt-3 border-t border-[#F0D5E2] flex items-center justify-between text-xs font-bold text-[#AA336A] group-hover:text-[#8E2656]">
                       <span>View {mod.title}</span>
@@ -446,7 +663,7 @@ export default function ModularHomePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {VENUE_MODULES.map((vMod) => (
+            {venueModules.map((vMod) => (
               <Link
                 key={vMod.type}
                 href={`/venues/${vMod.type}`}
@@ -501,11 +718,11 @@ export default function ModularHomePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {EVENT_MODULES.map((eMod) => {
+            {eventModules.map((eMod) => {
               const Icon = eMod.icon;
               return (
                 <Link
-                  key={eMod.slug}
+                  key={eMod.id || eMod.slug}
                   href={`/events/${eMod.slug}`}
                   className="group relative rounded-3xl bg-white border border-[#F0D5E2] overflow-hidden shadow-sm hover:shadow-xl hover:border-[#AA336A] transition-all duration-300 flex flex-col justify-between"
                 >
@@ -529,9 +746,25 @@ export default function ModularHomePage() {
                   </div>
 
                   <div className="p-5 bg-white space-y-4 flex-1 flex flex-col justify-between">
-                    <p className="text-xs text-[#705562] font-medium leading-relaxed">
-                      {eMod.desc}
-                    </p>
+                    <div className="space-y-2">
+                      <p className="text-xs text-[#705562] font-medium leading-relaxed">
+                        {eMod.desc}
+                      </p>
+                      {eMod.subEvents && eMod.subEvents.length > 0 && (
+                        <div className="flex flex-wrap gap-1 pt-1">
+                          {eMod.subEvents.slice(0, 3).map((sub) => (
+                            <span key={sub.id} className="px-2 py-0.5 rounded-md bg-[#AA336A]/10 text-[10px] font-bold text-[#AA336A]">
+                              {sub.name}
+                            </span>
+                          ))}
+                          {eMod.subEvents.length > 3 && (
+                            <span className="px-1.5 py-0.5 rounded-md bg-gray-100 text-[10px] font-bold text-gray-500">
+                              +{eMod.subEvents.length - 3} sub-events
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
 
                     <div className="pt-3 border-t border-[#F0D5E2] flex items-center justify-between text-xs font-bold text-[#AA336A] group-hover:text-[#8E2656]">
                       <span>Browse {eMod.title} Packages</span>

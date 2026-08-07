@@ -122,11 +122,26 @@ export default function CategoryClientView({ slug }) {
     'dj-sound-system': 5,
     'photographers': 6,
     'car-rental': 7,
-    'stationery': 8,         // fixed: was 'wedding-stationery'
+    'stationery': 8,
   };
 
-  // Reverse map: category DB id → slug (to filter DB vendors by current page)
-  const CATEGORY_ID_FOR_SLUG = CATEGORY_SLUG_TO_ID[slug];
+  const resolveCategoryId = async () => {
+    if (CATEGORY_SLUG_TO_ID[slug]) return CATEGORY_SLUG_TO_ID[slug];
+    if (!isNaN(slug)) return parseInt(slug, 10);
+    try {
+      const res = await api.get('/categories');
+      if (res.data?.success && Array.isArray(res.data.categories)) {
+        const found = res.data.categories.find(
+          (c) =>
+            c.slug === slug ||
+            c.id == slug ||
+            c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === slug
+        );
+        if (found) return found.id;
+      }
+    } catch (_) {}
+    return null;
+  };
 
   useEffect(() => {
     fetchDbVendors();
@@ -135,7 +150,7 @@ export default function CategoryClientView({ slug }) {
 
   const fetchSubServices = async () => {
     try {
-      const catId = CATEGORY_SLUG_TO_ID[slug];
+      const catId = await resolveCategoryId();
       if (!catId) return;
       const res = await api.get(`/categories/${catId}/sub-services`);
       if (res.data.success && res.data.subServices.length > 0) {
@@ -151,7 +166,7 @@ export default function CategoryClientView({ slug }) {
       setLoadingDb(true);
 
       // Build query: filter by category_id so only THIS category's vendors load
-      const catId = CATEGORY_SLUG_TO_ID[slug];
+      const catId = await resolveCategoryId();
       const queryParams = catId ? `?category_id=${catId}` : '';
       const res = await api.get(`/vendors${queryParams}`);
 
