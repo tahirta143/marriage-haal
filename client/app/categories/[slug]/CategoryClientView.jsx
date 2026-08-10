@@ -102,11 +102,27 @@ export default function CategoryClientView({ slug }) {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [eventFunction, setEventFunction] = useState('Barat Planning');
   const [eventDate, setEventDate] = useState('2026-10-24');
-  const [guestCount, setGuestCount] = useState(300);
+  const [guestCount, setGuestCount] = useState(200);
+  const [eventSlot, setEventSlot] = useState('Evening Slot');
+  const [selectedHallId, setSelectedHallId] = useState('');
+  const [halls, setHalls] = useState([]);
   const [custPhone, setCustPhone] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [inquiryError, setInquiryError] = useState('');
+
+  useEffect(() => {
+    fetchHalls();
+  }, []);
+
+  const fetchHalls = async () => {
+    try {
+      const res = await api.get('/halls');
+      if (res.data.success) {
+        setHalls(res.data.halls || []);
+      }
+    } catch (_) {}
+  };
 
   const [dbVendors, setDbVendors] = useState([]);
   const [loadingDb, setLoadingDb] = useState(false);
@@ -275,15 +291,16 @@ export default function CategoryClientView({ slug }) {
       } catch (_) { }
 
       const payload = {
-        hall_id: hallId,
+        hall_id: selectedHallId ? parseInt(selectedHallId) : null,
+        is_vendor_quote: !selectedHallId,
         event_type: eventFunction,
         event_date: eventDate,
-        guest_count: parseInt(guestCount) || 100,
+        slot: eventSlot,
+        guest_count: parseInt(guestCount) || 200,
         customer_phone: custPhone || user.phone || '+92 300 1234567',
         customer_name: user.name,
         customer_email: user.email,
-        // Do not pass selected_services for a simple availability inquiry
-        // (no package_id selected yet — this is just an inquiry)
+        total_amount: quoteModalTarget?.starting_price ? Number(quoteModalTarget.starting_price) : undefined,
         selected_services: [],
       };
 
@@ -774,6 +791,54 @@ export default function CategoryClientView({ slug }) {
                     className="w-full px-4 py-3 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-xs font-bold text-[#22131A]"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-[#604453] uppercase mb-1">
+                    Schedule Slot
+                  </label>
+                  <select
+                    value={eventSlot}
+                    onChange={(e) => setEventSlot(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-xs font-bold text-[#22131A]"
+                  >
+                    <option value="Evening Slot">Evening Slot</option>
+                    <option value="Night Slot">Night Slot</option>
+                    <option value="Day Slot">Day Slot</option>
+                    <option value="Afternoon Slot">Afternoon Slot</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#604453] uppercase mb-1">
+                    Estimated Guests
+                  </label>
+                  <input
+                    type="number"
+                    value={guestCount}
+                    onChange={(e) => setGuestCount(e.target.value)}
+                    min="10"
+                    placeholder="e.g. 200"
+                    className="w-full px-4 py-3 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-xs font-bold text-[#22131A]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#604453] uppercase mb-1">
+                  Venue / Hall Selection
+                </label>
+                <select
+                  value={selectedHallId}
+                  onChange={(e) => setSelectedHallId(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-[#FAF5F7] border border-[#F0D5E2] text-xs font-bold text-[#22131A]"
+                >
+                  <option value="">Vendor Service Quote Only (No Venue Rental Fee)</option>
+                  {halls.map((h) => (
+                    <option key={h.id} value={h.id}>{h.name}</option>
+                  ))}
+                </select>
               </div>
 
               <div>

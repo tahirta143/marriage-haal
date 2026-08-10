@@ -28,10 +28,10 @@ function DraggablePermissionCard({ perm, isAssigned, onToggle }) {
 
   const style = transform
     ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-        zIndex: 999,
-        opacity: 0.85,
-      }
+      transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+      zIndex: 999,
+      opacity: 0.85,
+    }
     : undefined;
 
   return (
@@ -40,13 +40,11 @@ function DraggablePermissionCard({ perm, isAssigned, onToggle }) {
       {...listeners}
       {...attributes}
       style={style}
-      className={`p-3 rounded-xl border flex items-center justify-between transition-all select-none cursor-grab active:cursor-grabbing hover:shadow-md ${
-        isDragging ? 'shadow-2xl ring-2 ring-[#AA336A] bg-white scale-105 opacity-90' : ''
-      } ${
-        isAssigned
+      className={`p-3 rounded-xl border flex items-center justify-between transition-all select-none cursor-grab active:cursor-grabbing hover:shadow-md ${isDragging ? 'shadow-2xl ring-2 ring-[#AA336A] bg-white scale-105 opacity-90' : ''
+        } ${isAssigned
           ? 'bg-[#FDF2F7] border-[#AA336A]/40 text-[#111827]'
           : 'bg-white border-[#E5E7EB] text-gray-700 hover:border-[#AA336A]/40'
-      }`}
+        }`}
     >
       <div className="flex items-center gap-2.5 overflow-hidden">
         <div className="text-gray-400 p-0.5 flex-shrink-0">
@@ -64,11 +62,10 @@ function DraggablePermissionCard({ perm, isAssigned, onToggle }) {
           e.stopPropagation();
           onToggle(perm.id);
         }}
-        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-colors flex-shrink-0 ml-2 ${
-          isAssigned
+        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-colors flex-shrink-0 ml-2 ${isAssigned
             ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
             : 'bg-[#AA336A]/10 text-[#AA336A] hover:bg-[#AA336A]/20 border border-[#AA336A]/25'
-        }`}
+          }`}
       >
         {isAssigned ? (
           <span className="flex items-center gap-1">
@@ -91,11 +88,10 @@ function DroppableTargetZone({ children, id, title, isOverClass }) {
   return (
     <div
       ref={setNodeRef}
-      className={`min-h-[360px] p-4 rounded-2xl border-2 transition-all duration-200 ${
-        isOver
+      className={`min-h-[360px] p-4 rounded-2xl border-2 transition-all duration-200 ${isOver
           ? 'border-[#AA336A] bg-[#FDF2F7] ring-4 ring-[#AA336A]/15 scale-[1.01]'
           : 'border-dashed border-[#E5E7EB] bg-white'
-      }`}
+        }`}
     >
       <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center justify-between">
         <span>{title}</span>
@@ -293,11 +289,10 @@ export default function AccessControlDndPage() {
                       <button
                         key={group.id}
                         onClick={() => handleSelectGroup(group)}
-                        className={`w-full text-left p-3.5 rounded-xl border transition-all duration-150 flex items-center justify-between ${
-                          isSelected
+                        className={`w-full text-left p-3.5 rounded-xl border transition-all duration-150 flex items-center justify-between ${isSelected
                             ? 'bg-[#FDF2F7] border-[#AA336A] text-[#111827] font-bold ring-1 ring-[#AA336A]/30 shadow-sm'
                             : 'bg-gray-50 border-[#E5E7EB] text-gray-600 hover:bg-gray-100'
-                        }`}
+                          }`}
                       >
                         <div>
                           <div className="text-sm font-bold text-[#111827]">{group.name}</div>

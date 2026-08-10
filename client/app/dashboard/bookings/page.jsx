@@ -109,6 +109,7 @@ export default function BookingsDeskPage() {
       }
       subtotal += lineTotal;
       return {
+        category_id: pkg.category_id,
         package_id: pkg.id,
         package_name: pkg.name,
         category_name: pkg.category_name,
@@ -328,7 +329,11 @@ export default function BookingsDeskPage() {
                         {booking.guest_count_estimated || 300} Guests
                       </td>
                       <td className="p-3.5 font-mono text-[#AA336A] font-extrabold text-sm">
-                        PKR {Number(booking.total_amount || 0).toLocaleString()}
+                        <div>PKR {Number(booking.total_amount || 0).toLocaleString()}</div>
+                        <div className="text-[10px] text-[#705562] font-normal font-sans tracking-tight">
+                          Venue: PKR {Number(booking.hall_rental_cost || 0).toLocaleString()}
+                          {Number(booking.services_cost || 0) > 0 && ` + Services: PKR ${Number(booking.services_cost).toLocaleString()}`}
+                        </div>
                       </td>
                       <td className="p-3.5">
                         <select

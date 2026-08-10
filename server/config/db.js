@@ -93,6 +93,16 @@ const initDatabaseAndMigrations = async () => {
       await conn.query(`ALTER TABLE bookings ADD COLUMN customer_email VARCHAR(100) NULL`);
     } catch (mErr) {}
 
+    // Migration: Add slot column to bookings if missing
+    try {
+      await conn.query(`ALTER TABLE bookings ADD COLUMN slot VARCHAR(50) DEFAULT 'Evening Slot'`);
+    } catch (mErr) {}
+
+    // Migration: Allow hall_id to be NULL for vendor quotes
+    try {
+      await conn.query(`ALTER TABLE bookings MODIFY COLUMN hall_id INT NULL`);
+    } catch (mErr) {}
+
     // Migration: Add city column to vendors if missing
     try {
       await conn.query(`ALTER TABLE vendors ADD COLUMN city VARCHAR(50) NOT NULL DEFAULT 'Lahore'`);

@@ -40,14 +40,26 @@ exports.getAllBookings = async (req, res) => {
     const [rows] = await pool.execute(query, params);
 
     const processedBookings = rows.map((b) => {
+      const pEvt = Number(b.price_per_event || 150000);
+      const pHd = Number(b.price_per_head || 1200);
+      const guests = Number(b.guest_count_estimated || 100);
+      const hallRentalCost = pEvt + (pHd * guests);
+
       let amt = Number(b.total_amount || 0);
       if (amt <= 0) {
-        const pEvt = Number(b.price_per_event || 150000);
-        const pHd = Number(b.price_per_head || 1200);
-        const guests = Number(b.guest_count_estimated || 100);
-        amt = pEvt + (pHd * guests);
+        amt = hallRentalCost;
       }
-      return { ...b, total_amount: amt };
+
+      const servicesCost = Math.max(0, amt - hallRentalCost);
+
+      return {
+        ...b,
+        total_amount: amt,
+        hall_base_price: pEvt,
+        hall_per_head_price: pHd,
+        hall_rental_cost: hallRentalCost,
+        services_cost: servicesCost
+      };
     });
 
     return res.status(200).json({ success: true, count: processedBookings.length, bookings: processedBookings });
@@ -66,7 +78,9 @@ exports.getBookingById = async (req, res) => {
              COALESCE(NULLIF(b.customer_name, ''), u.name, 'Guest Customer') as customer_name, 
              COALESCE(NULLIF(b.customer_email, ''), u.email, 'guest@shaadipro.com') as customer_email, 
              COALESCE(NULLIF(b.customer_phone, ''), u.phone, 'N/A') as customer_phone, 
-             COALESCE(h.name, 'ShaadiPro Main Hall') as hall_name
+             COALESCE(h.name, 'ShaadiPro Main Hall') as hall_name,
+             COALESCE(h.price_per_event, 150000) as hall_price_per_event,
+             COALESCE(h.price_per_head, 1200) as hall_price_per_head
       FROM bookings b
       LEFT JOIN users u ON b.customer_id = u.id
       LEFT JOIN halls h ON b.hall_id = h.id
@@ -89,27 +103,46 @@ exports.getBookingById = async (req, res) => {
       WHERE bs.booking_id = ?
     `, [id]);
 
-    booking.services = services;
+    const guests = Number(booking.guest_count_estimated || 100);
+    const pEvt = Number(booking.hall_price_per_event || 150000);
+    const pHd = Number(booking.hall_price_per_head || 1200);
+    const hallRentalCost = pEvt + (pHd * guests);
     const servicesSum = services.reduce((sum, s) => sum + Number(s.price), 0);
     
     let currentTotal = Number(booking.total_amount || 0);
     if (currentTotal <= 0) {
-      let hallRentalCost = 0;
-      try {
-        const [hData] = await pool.execute('SELECT price_per_event, price_per_head FROM halls WHERE id = ?', [booking.hall_id]);
-        if (hData.length > 0) {
-          const pEvt = Number(hData[0].price_per_event || 150000);
-          const pHd = Number(hData[0].price_per_head || 1200);
-          hallRentalCost = pEvt + (pHd * Number(booking.guest_count_estimated || 100));
-        }
-      } catch (_) {
-        hallRentalCost = 150000 + (1200 * Number(booking.guest_count_estimated || 100));
-      }
       currentTotal = hallRentalCost + servicesSum;
       await pool.execute('UPDATE bookings SET total_amount = ? WHERE id = ?', [currentTotal, id]);
     }
 
     booking.total_amount = currentTotal;
+    booking.hall_rental_cost = hallRentalCost;
+    booking.hall_base_price = pEvt;
+    booking.hall_per_head_price = pHd;
+    booking.services_cost = servicesSum;
+
+    const venueItems = (booking.hall_id && hallRentalCost > 0 && Number(booking.services_cost || 0) !== Number(booking.total_amount)) ? [
+      {
+        id: 'venue_base',
+        category_name: 'Venue & Hall Rental',
+        package_name: `${booking.hall_name} (Fixed Event Fee)`,
+        pricing_type: 'fixed',
+        unit_price: pEvt,
+        qty: 1,
+        price: pEvt
+      },
+      {
+        id: 'venue_per_head',
+        category_name: 'Venue Guest Cover',
+        package_name: `${booking.hall_name} (${guests} Guests @ PKR ${pHd.toLocaleString()}/head)`,
+        pricing_type: 'per_head',
+        unit_price: pHd,
+        qty: guests,
+        price: pHd * guests
+      }
+    ] : [];
+
+    booking.services = [...venueItems, ...services];
 
     return res.status(200).json({ success: true, booking });
   } catch (error) {
@@ -130,7 +163,9 @@ exports.createBooking = async (req, res) => {
       event_date,
       slot,
       guest_count,
-      selected_services
+      selected_services,
+      selected_packages,
+      is_vendor_quote
     } = req.body;
 
     if (!event_type || !event_date || !guest_count) {
@@ -138,7 +173,9 @@ exports.createBooking = async (req, res) => {
     }
 
     const guests = parseInt(guest_count) || 100;
-    const servicesList = Array.isArray(selected_services) ? selected_services : [];
+    const servicesList = Array.isArray(selected_services)
+      ? selected_services
+      : (Array.isArray(selected_packages) ? selected_packages : []);
 
     // ── Resolve Hall ──────────────────────────────────────────────────
     let resolvedHallId = parseInt(hall_id) || 1;
@@ -161,15 +198,17 @@ exports.createBooking = async (req, res) => {
     }
 
     // ── Double-Booking Slot Conflict Check ──────────────────────────────
-    const [conflictCheck] = await pool.execute(
-      "SELECT id FROM bookings WHERE hall_id = ? AND event_date = ? AND status IN ('confirmed', 'tentative') LIMIT 1",
-      [resolvedHallId, event_date]
-    );
-    if (conflictCheck.length > 0) {
-      return res.status(409).json({
-        success: false,
-        message: `Slot conflict: The selected venue is already reserved on ${event_date}. Please select another date.`
-      });
+    if (!is_vendor_quote && hall_id) {
+      const [conflictCheck] = await pool.execute(
+        "SELECT id FROM bookings WHERE hall_id = ? AND event_date = ? AND status IN ('confirmed', 'tentative') LIMIT 1",
+        [resolvedHallId, event_date]
+      );
+      if (conflictCheck.length > 0) {
+        return res.status(409).json({
+          success: false,
+          message: `Slot conflict: The selected venue is already reserved on ${event_date}. Please select another date.`
+        });
+      }
     }
 
     // ── Resolve Customer ──────────────────────────────────────────────
@@ -219,11 +258,12 @@ exports.createBooking = async (req, res) => {
 
     const [bRes] = await connection.execute(
       `INSERT INTO bookings
-       (customer_id, hall_id, hall_slot_id, event_type, event_date, guest_count_estimated, status, created_by, total_amount, customer_name, customer_phone, customer_email)
-       VALUES (?, ?, NULL, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
+       (customer_id, hall_id, hall_slot_id, slot, event_type, event_date, guest_count_estimated, status, created_by, total_amount, customer_name, customer_phone, customer_email)
+       VALUES (?, ?, NULL, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
       [
         customerId,
-        resolvedHallId,
+        is_vendor_quote ? null : resolvedHallId,
+        slot || 'Evening Slot',
         event_type,
         event_date,
         guests,
@@ -240,7 +280,75 @@ exports.createBooking = async (req, res) => {
 
     // ── Insert Service Line Items ─────────────────────────────────────
     for (const srv of servicesList) {
-      if (!srv.category_id || !srv.package_id) continue;
+      if (!srv) continue;
+
+      let rawCatId = srv.category_id ? parseInt(srv.category_id) : null;
+      let rawPkgId = (srv.package_id || srv.id) ? parseInt(srv.package_id || srv.id) : null;
+
+      let resolvedCatId = null;
+      let resolvedPkgId = null;
+
+      // 1. Check if package_id exists in category_packages
+      if (rawPkgId && !isNaN(rawPkgId)) {
+        const [pkgCheck] = await connection.execute(
+          'SELECT id, category_id FROM category_packages WHERE id = ? LIMIT 1',
+          [rawPkgId]
+        );
+        if (pkgCheck.length > 0) {
+          resolvedPkgId = pkgCheck[0].id;
+          resolvedCatId = pkgCheck[0].category_id;
+        }
+      }
+
+      // 2. If category_id was provided and not resolved from package, check if it exists in categories
+      if (!resolvedCatId && rawCatId && !isNaN(rawCatId)) {
+        const [catCheck] = await connection.execute(
+          'SELECT id FROM categories WHERE id = ? LIMIT 1',
+          [rawCatId]
+        );
+        if (catCheck.length > 0) {
+          resolvedCatId = catCheck[0].id;
+        }
+      }
+
+      // 3. Fallback for category_id: pick the first category from categories, or create a default one
+      if (!resolvedCatId) {
+        const [catFallback] = await connection.execute(
+          'SELECT id FROM categories ORDER BY id ASC LIMIT 1'
+        );
+        if (catFallback.length > 0) {
+          resolvedCatId = catFallback[0].id;
+        } else {
+          const [newCat] = await connection.execute(
+            "INSERT INTO categories (name, pricing_type, image_url) VALUES ('General Services', 'fixed', 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=800&q=80')"
+          );
+          resolvedCatId = newCat.insertId;
+        }
+      }
+
+      // 4. Fallback for package_id: check if there's any package for this category, or any package overall, or create a default package
+      if (!resolvedPkgId) {
+        const [pkgFallbackCat] = await connection.execute(
+          'SELECT id FROM category_packages WHERE category_id = ? ORDER BY id ASC LIMIT 1',
+          [resolvedCatId]
+        );
+        if (pkgFallbackCat.length > 0) {
+          resolvedPkgId = pkgFallbackCat[0].id;
+        } else {
+          const [pkgFallbackAny] = await connection.execute(
+            'SELECT id FROM category_packages ORDER BY id ASC LIMIT 1'
+          );
+          if (pkgFallbackAny.length > 0) {
+            resolvedPkgId = pkgFallbackAny[0].id;
+          } else {
+            const [newPkg] = await connection.execute(
+              "INSERT INTO category_packages (category_id, name, price, details) VALUES (?, 'Standard Package', 0, '[]')",
+              [resolvedCatId]
+            );
+            resolvedPkgId = newPkg.insertId;
+          }
+        }
+      }
 
       let linePrice = Number(srv.price || 0);
       if (srv.pricing_type === 'per_head') {
@@ -251,21 +359,23 @@ exports.createBooking = async (req, res) => {
 
       await connection.execute(
         `INSERT INTO booking_services (booking_id, category_id, package_id, price, status) VALUES (?, ?, ?, ?, ?)`,
-        [dbBookingId, srv.category_id, srv.package_id, linePrice, 'assigned']
+        [dbBookingId, resolvedCatId, resolvedPkgId, linePrice, 'assigned']
       );
     }
 
     // ── Calculate Hall Venue Rental Price ──────────────────────────────
     let hallRentalCost = 0;
-    try {
-      const [hData] = await pool.execute('SELECT price_per_event, price_per_head FROM halls WHERE id = ?', [resolvedHallId]);
-      if (hData.length > 0) {
-        const pEvt = Number(hData[0].price_per_event || 150000);
-        const pHd = Number(hData[0].price_per_head || 1200);
-        hallRentalCost = pEvt + (pHd * guests);
+    if (!is_vendor_quote && hall_id) {
+      try {
+        const [hData] = await pool.execute('SELECT price_per_event, price_per_head FROM halls WHERE id = ?', [resolvedHallId]);
+        if (hData.length > 0) {
+          const pEvt = Number(hData[0].price_per_event || 150000);
+          const pHd = Number(hData[0].price_per_head || 1200);
+          hallRentalCost = pEvt + (pHd * guests);
+        }
+      } catch (_) {
+        hallRentalCost = 150000 + (1200 * guests);
       }
-    } catch (_) {
-      hallRentalCost = 150000 + (1200 * guests);
     }
 
     const calculatedTotal = req.body.total_amount ? Number(req.body.total_amount) : (hallRentalCost + lineItemSum);
