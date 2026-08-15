@@ -149,7 +149,7 @@ exports.getCalendarEvents = async (req, res) => {
     const targetMonth = month || '2026-10';
 
     let query = `
-      SELECT b.id as booking_id, b.event_date as date, b.hall_id, b.slot, b.status, b.event_type,
+      SELECT b.id as booking_id, DATE_FORMAT(b.event_date, '%Y-%m-%d') as date, b.hall_id, b.slot, b.status, b.event_type,
              u.name as customer_name, h.name as hall_name
       FROM bookings b
       JOIN users u ON b.customer_id = u.id
